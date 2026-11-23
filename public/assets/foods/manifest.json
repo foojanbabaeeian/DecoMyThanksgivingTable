@@ -1,0 +1,302 @@
+{
+  "apple-cider": {
+    "name": "Apple Cider",
+    "image": "/assets/foods/drinks/apple-cider.png",
+    "category": "drinks"
+  },
+  "cranberry-juice": {
+    "name": "Cranberry Juice",
+    "image": "/assets/foods/drinks/cranberry-juice.png",
+    "category": "drinks"
+  },
+  "milk": {
+    "name": "Milk",
+    "image": "/assets/foods/drinks/milk.png",
+    "category": "drinks"
+  },
+  "pumpkin-spice-latte": {
+    "name": "Pumpkin Spice Latte",
+    "image": "/assets/foods/drinks/pumpkin-spice-latte.png",
+    "category": "drinks"
+  },
+  "water": {
+    "name": "Water",
+    "image": "/assets/foods/drinks/water.png",
+    "category": "drinks"
+  },
+  "hot-chocolate": {
+    "name": "Hot Chocolate",
+    "image": "/assets/foods/drinks/hot-chocolate.png",
+    "category": "drinks"
+  },
+  "lemonade": {
+    "name": "Lemonade",
+    "image": "/assets/foods/drinks/lemonade.png",
+    "category": "drinks"
+  },
+  "deviled-eggs": {
+    "name": "Deviled Eggs",
+    "image": "/assets/foods/sides/deviled-eggs.png",
+    "category": "sides"
+  },
+  "corn": {
+    "name": "Corn",
+    "image": "/assets/foods/sides/corn.png",
+    "category": "sides"
+  },
+  "roasted-vegetables": {
+    "name": "Roasted Vegetables",
+    "image": "/assets/foods/sides/roasted-vegetables.png",
+    "category": "sides"
+  },
+  "baked-potatoes": {
+    "name": "Baked Potatoes",
+    "image": "/assets/foods/sides/baked-potatoes.png",
+    "category": "sides"
+  },
+  "stuffing": {
+    "name": "Stuffing",
+    "image": "/assets/foods/sides/stuffing.png",
+    "category": "sides"
+  },
+  "biscuits": {
+    "name": "Biscuits",
+    "image": "/assets/foods/sides/biscuits.png",
+    "category": "sides"
+  },
+  "rice": {
+    "name": "Rice",
+    "image": "/assets/foods/sides/rice.png",
+    "category": "sides"
+  },
+  "cornbread": {
+    "name": "Cornbread",
+    "image": "/assets/foods/sides/cornbread.png",
+    "category": "sides"
+  },
+  "sweet-potato-casserole": {
+    "name": "Sweet Potato Casserole",
+    "image": "/assets/foods/sides/sweet-potato-casserole.png",
+    "category": "sides"
+  },
+  "salad": {
+    "name": "Salad",
+    "image": "/assets/foods/sides/salad.png",
+    "category": "sides"
+  },
+  "cranberry-sauce": {
+    "name": "Cranberry Sauce",
+    "image": "/assets/foods/sides/cranberry-sauce.png",
+    "category": "sides"
+  },
+  "green-bean-casserole": {
+    "name": "Green Bean Casserole",
+    "image": "/assets/foods/sides/green-bean-casserole.png",
+    "category": "sides"
+  },
+  "glazed-carrots": {
+    "name": "Glazed Carrots",
+    "image": "/assets/foods/sides/glazed-carrots.png",
+    "category": "sides"
+  },
+  "dinner-rolls": {
+    "name": "Dinner Rolls",
+    "image": "/assets/foods/sides/dinner-rolls.png",
+    "category": "sides"
+  },
+  "scalloped-potatoes": {
+    "name": "Scalloped Potatoes",
+    "image": "/assets/foods/sides/scalloped-potatoes.png",
+    "category": "sides"
+  },
+  "brussels-sprouts": {
+    "name": "Brussels Sprouts",
+    "image": "/assets/foods/sides/brussels-sprouts.png",
+    "category": "sides"
+  },
+  "mashed-potatoes": {
+    "name": "Mashed Potatoes",
+    "image": "/assets/foods/sides/mashed-potatoes.png",
+    "category": "sides"
+  },
+  "mac-and-cheese": {
+    "name": "Mac And Cheese",
+    "image": "/assets/foods/sides/mac-and-cheese.png",
+    "category": "sides"
+  },
+  "gravy": {
+    "name": "Gravy",
+    "image": "/assets/foods/sides/gravy.png",
+    "category": "sides"
+  },
+  "sunflowers": {
+    "name": "Sunflowers",
+    "image": "/assets/foods/decorations/sunflowers.png",
+    "category": "decorations"
+  },
+  "pinecones": {
+    "name": "Pinecones",
+    "image": "/assets/foods/decorations/pinecones.png",
+    "category": "decorations"
+  },
+  "fairy-lights": {
+    "name": "Fairy Lights",
+    "image": "/assets/foods/decorations/fairy-lights.png",
+    "category": "decorations"
+  },
+  "place-card": {
+    "name": "Place Card",
+    "image": "/assets/foods/decorations/place-card.png",
+    "category": "decorations"
+  },
+  "mini-pumpkin": {
+    "name": "Mini Pumpkin",
+    "image": "/assets/foods/decorations/mini-pumpkin.png",
+    "category": "decorations"
+  },
+  "pumpkins": {
+    "name": "Pumpkins",
+    "image": "/assets/foods/decorations/pumpkins.png",
+    "category": "decorations"
+  },
+  "candle": {
+    "name": "Candle",
+    "image": "/assets/foods/decorations/candle.png",
+    "category": "decorations"
+  },
+  "acorns": {
+    "name": "Acorns",
+    "image": "/assets/foods/decorations/acorns.png",
+    "category": "decorations"
+  },
+  "cornucopia": {
+    "name": "Cornucopia",
+    "image": "/assets/foods/decorations/cornucopia.png",
+    "category": "decorations"
+  },
+  "autumn-leaves": {
+    "name": "Autumn Leaves",
+    "image": "/assets/foods/decorations/autumn-leaves.png",
+    "category": "decorations"
+  },
+  "cheesecake": {
+    "name": "Cheesecake",
+    "image": "/assets/foods/desserts/cheesecake.png",
+    "category": "desserts"
+  },
+  "pumpkin-pie": {
+    "name": "Pumpkin Pie",
+    "image": "/assets/foods/desserts/pumpkin-pie.png",
+    "category": "desserts"
+  },
+  "sweet-potato-pie": {
+    "name": "Sweet Potato Pie",
+    "image": "/assets/foods/desserts/sweet-potato-pie.png",
+    "category": "desserts"
+  },
+  "cookies": {
+    "name": "Cookies",
+    "image": "/assets/foods/desserts/cookies.png",
+    "category": "desserts"
+  },
+  "brownies": {
+    "name": "Brownies",
+    "image": "/assets/foods/desserts/brownies.png",
+    "category": "desserts"
+  },
+  "donuts": {
+    "name": "Donuts",
+    "image": "/assets/foods/desserts/donuts.png",
+    "category": "desserts"
+  },
+  "cupcakes": {
+    "name": "Cupcakes",
+    "image": "/assets/foods/desserts/cupcakes.png",
+    "category": "desserts"
+  },
+  "apple-pie": {
+    "name": "Apple Pie",
+    "image": "/assets/foods/desserts/apple-pie.png",
+    "category": "desserts"
+  },
+  "pecan-pie": {
+    "name": "Pecan Pie",
+    "image": "/assets/foods/desserts/pecan-pie.png",
+    "category": "desserts"
+  },
+  "cinnamon-rolls": {
+    "name": "Cinnamon Rolls",
+    "image": "/assets/foods/desserts/cinnamon-rolls.png",
+    "category": "desserts"
+  },
+  "cherry-pie": {
+    "name": "Cherry Pie",
+    "image": "/assets/foods/desserts/cherry-pie.png",
+    "category": "desserts"
+  },
+  "vegetarian-roast": {
+    "name": "Vegetarian Roast",
+    "image": "/assets/foods/mains/vegetarian-roast.png",
+    "category": "mains"
+  },
+  "roast-chicken": {
+    "name": "Roast Chicken",
+    "image": "/assets/foods/mains/roast-chicken.png",
+    "category": "mains"
+  },
+  "roast-turkey": {
+    "name": "Roast Turkey",
+    "image": "/assets/foods/mains/roast-turkey.png",
+    "category": "mains"
+  },
+  "rotisserie-turkey": {
+    "name": "Rotisserie Turkey",
+    "image": "/assets/foods/mains/rotisserie-turkey.png",
+    "category": "mains"
+  },
+  "turkey-slices": {
+    "name": "Turkey Slices",
+    "image": "/assets/foods/mains/turkey-slices.png",
+    "category": "mains"
+  },
+  "honey-ham": {
+    "name": "Honey Ham",
+    "image": "/assets/foods/mains/honey-ham.png",
+    "category": "mains"
+  },
+  "roast-beef": {
+    "name": "Roast Beef",
+    "image": "/assets/foods/mains/roast-beef.png",
+    "category": "mains"
+  },
+  "apples": {
+    "name": "Apples",
+    "image": "/assets/foods/snacks/apples.png",
+    "category": "snacks"
+  },
+  "bread-basket": {
+    "name": "Bread Basket",
+    "image": "/assets/foods/snacks/bread-basket.png",
+    "category": "snacks"
+  },
+  "cheese-platter": {
+    "name": "Cheese Platter",
+    "image": "/assets/foods/snacks/cheese-platter.png",
+    "category": "snacks"
+  },
+  "fruit-platter": {
+    "name": "Fruit Platter",
+    "image": "/assets/foods/snacks/fruit-platter.png",
+    "category": "snacks"
+  },
+  "nuts": {
+    "name": "Nuts",
+    "image": "/assets/foods/snacks/nuts.png",
+    "category": "snacks"
+  },
+  "grapes": {
+    "name": "Grapes",
+    "image": "/assets/foods/snacks/grapes.png",
+    "category": "snacks"
+  }
+}

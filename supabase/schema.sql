@@ -183,3 +183,6 @@ drop trigger if exists thank_you_cards_rate_limit on public.thank_you_cards;
 create trigger thank_you_cards_rate_limit
   before insert on public.thank_you_cards
   for each row execute function public.limit_card_rate();
+
+-- Make Supabase's API pick up the new functions and columns immediately.
+notify pgrst, 'reload schema';

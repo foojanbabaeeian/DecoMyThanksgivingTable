@@ -113,3 +113,24 @@ revoke all on function public.delete_card(uuid, uuid, uuid) from public;
 grant execute on function public.create_table(text, jsonb) to anon, authenticated;
 grant execute on function public.update_table(uuid, uuid, text, jsonb) to anon, authenticated;
 grant execute on function public.delete_card(uuid, uuid, uuid) to anon, authenticated;
+
+-- Basic flood protection: at most 20 new cards per table per minute.
+create or replace function public.limit_card_rate()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if (select count(*) from public.thank_you_cards
+       where table_id = new.table_id and created_at > now() - interval '1 minute') >= 20 then
+    raise exception 'Too many cards right now. Please try again in a minute.' using errcode = 'P0001';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists thank_you_cards_rate_limit on public.thank_you_cards;
+create trigger thank_you_cards_rate_limit
+  before insert on public.thank_you_cards
+  for each row execute function public.limit_card_rate();

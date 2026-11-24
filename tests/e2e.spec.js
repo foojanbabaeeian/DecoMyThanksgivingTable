@@ -93,3 +93,21 @@ test('table names read naturally (no "family’s’s")', async ({ page }) => {
   expect(await open('Chris')).toBe('Chris’ Thanksgiving table');
   expect(await open('The Lee family')).toBe('The Lee family’s Thanksgiving table');
 });
+
+test('phone: the card form fits and the send button is reachable', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 667 });
+  const payload = Buffer.from(JSON.stringify({ items: [], cards: [], gratitude: '', hostName: 'Phone family' }), 'utf8').toString('base64');
+  await page.goto(`./#table=${payload}`);
+  await page.reload();
+  await page.getByRole('button', { name: /Write a thank-you card/ }).click();
+  const send = page.getByRole('button', { name: /Place card on table/ });
+  const box = await send.boundingBox();
+  expect(box.y + box.height).toBeLessThanOrEqual(667);
+  const sheet = await page.locator('.modal').boundingBox();
+  expect(sheet.x).toBeGreaterThanOrEqual(0);
+  expect(sheet.x + sheet.width).toBeLessThanOrEqual(375);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
+  await page.locator('textarea[name=message]').fill('From a phone');
+  await send.click();
+  await expect(page.locator('.card-sticker')).toHaveCount(1);
+});

@@ -132,3 +132,24 @@ a.card-row{text-decoration:none;color:inherit}
 @keyframes crest-in{from{opacity:0;transform:scale(.4) rotate(-20deg)}}
 @keyframes crest-wobble{0%,100%{transform:rotate(0)}6%{transform:rotate(-8deg)}12%{transform:rotate(6deg)}18%{transform:rotate(0)}}
 @media(prefers-reduced-motion:reduce){.menu-leaves{display:none}.menu-list li,.menu-crest{animation:none}}
+/* Card form: works on phones. Stickers are a swipeable row, the send button stays visible. */
+.sticker-pick{min-width:0;display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 0}
+.sticker-pick legend{width:100%;margin-bottom:6px}
+.sticker-pick label{flex:none;width:56px;height:56px;aspect-ratio:auto;padding:6px;border-radius:14px}
+.sticker-pick label:has(input:checked){transform:translateY(-2px);box-shadow:0 6px 12px #bd633d33}
+.field input,.field textarea{font-size:16px}
+[data-card-form] .modal-actions{position:sticky;bottom:-24px;z-index:3;margin:14px -26px -24px;padding:14px 26px 20px;background:linear-gradient(180deg,#fffaf100 0,#fffaf1 22%);}
+@media(max-width:760px){
+  .modal-backdrop{place-items:end stretch;padding:0}
+  .modal-backdrop .modal{width:100%;max-height:92dvh;border-radius:24px 24px 0 0;padding:22px 18px 18px;animation:sheet-up .25s cubic-bezier(.2,.8,.2,1)}
+  .modal-backdrop .modal:before{content:'';display:block;width:44px;height:5px;border-radius:5px;background:#e3cdb0;margin:-8px auto 12px}
+  .modal h2{font-size:24px;padding-right:40px}
+  .sticker-pick{flex-wrap:nowrap;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 2px 8px;margin-left:-2px;-webkit-overflow-scrolling:touch}
+  .sticker-pick label{scroll-snap-align:start;width:60px;height:60px}
+  .field textarea{min-height:110px}
+  .field-row .check{margin:0 0 4px}
+  [data-card-form] .modal-actions{margin:12px -18px -18px;padding:12px 18px calc(16px + env(safe-area-inset-bottom))}
+  [data-card-form] .modal-actions .secondary{flex:0 0 auto}
+  [data-card-form] .modal-actions .primary{flex:1;justify-content:center}
+}
+@keyframes sheet-up{from{transform:translateY(40px);opacity:0}}

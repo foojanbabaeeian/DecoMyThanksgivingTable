@@ -260,7 +260,7 @@ function modal() {
   } else if (m.type === 'terms') {
     body = `<h2>Terms</h2><div class="policy"><p>Be kind. Cards are meant to say thank you.</p><p>Don’t post anything hateful, harassing, sexual, or anyone’s private information. We may remove cards or tables that break these rules.</p><p>You’re responsible for what you write. DecoThanks is provided as is, without warranties.</p></div><div class="modal-actions"><button class="primary" data-close>Close</button></div>`;
   }
-  return `<div class="modal-backdrop ${m.type==='menu'?'menu-backdrop':''}"><div class="modal" role="dialog" aria-modal="true"><button class="modal-x" data-close aria-label="Close">×</button>${body}</div></div>`;
+  return `<div class="modal-backdrop ${m.type==='menu'?'menu-backdrop':''} ${m.type==='write'?'write-backdrop':''}"><div class="modal" role="dialog" aria-modal="true"><button class="modal-x" data-close aria-label="Close">×</button>${body}</div></div>`;
 }
 
 function snapshot(){ state.history.push(JSON.stringify(state.items)); if(state.history.length>30)state.history.shift(); state.future=[]; }
@@ -306,8 +306,8 @@ function bind(){
   const on = (sel, fn) => document.querySelectorAll(sel).forEach(el => el.addEventListener('click', e => fn(e, el)));
   on('[data-page]', (e,b)=>{state.page=b.dataset.page;state.modal=null;render()});
   document.querySelector('[data-music]')?.addEventListener('click',e=>{state.musicMuted=!state.musicMuted;const created=!state.musicMuted&&ensureMusicPlayer();if(!created){musicCommand(state.musicMuted?'pauseVideo':'playVideo');}e.currentTarget.textContent=state.musicMuted?'♫':'🔊';e.currentTarget.setAttribute('aria-label',state.musicMuted?'Play theme song':'Mute theme song')});
-  on('[data-share]', ()=>{ state.shareUrl = state.remoteId ? tableLink() : ''; state.modal={type:'share'}; render(); document.querySelector('#host-name')?.focus(); });
-  on('[data-write]', ()=>{ state.modal={type:'write'}; render(); document.querySelector('[data-card-form] textarea')?.focus(); });
+  on('[data-share]', ()=>{ state.shareUrl = state.remoteId ? tableLink() : ''; state.modal={type:'share'}; render(); if (matchMedia('(pointer:fine)').matches) document.querySelector('#host-name')?.focus(); });
+  on('[data-write]', ()=>{ state.modal={type:'write'}; render(); if (matchMedia('(pointer:fine)').matches) document.querySelector('[data-card-form] textarea')?.focus(); });
   on('[data-cards]', ()=>{ state.modal={type:'list'}; render(); });
   on('[data-read]', (e,b)=>{ e.stopPropagation(); state.modal={type:'read', id:b.dataset.read}; render(); });
   on('[data-close]', closeModal);

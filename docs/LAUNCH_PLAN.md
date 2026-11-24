@@ -1,4 +1,4 @@
-# Launch plan: Harvest Table, Thanksgiving 2026
+# Launch plan: DecoThanks, Thanksgiving 2026
 
 Goal: as many real tables and thank-you cards as possible by Thanksgiving (Thursday, Nov 26), plus a few open-source contributors.
 
@@ -38,7 +38,7 @@ Edit freely; it's your voice. Two things to keep:
 
 ---
 
-> This Thanksgiving I built a little website: **Harvest Table.** You decorate a Thanksgiving table, share the link, and the people you love leave thank-you cards right on it. 🦃
+> This Thanksgiving I built a little website: **DecoThanks.** You decorate a Thanksgiving table, share the link, and the people you love leave thank-you cards right on it. 🦃
 >
 > 👉 Leave me a card: [YOUR TABLE LINK]
 >
@@ -52,11 +52,11 @@ Edit freely; it's your voice. Two things to keep:
 >
 > That's why I want to share **Buildy** (buildy.ai). Full disclosure: my partner is one of its co-founders. Nobody asked me to write this; I just love what they're making. You describe what you want in plain words, and it builds and hosts the website, sets up Stripe payments, makes the ads and social posts, and even answers the business phone. It's like having all the AI tools in one place, aimed at actually launching.
 >
-> [YOUR RESULT: e.g. "I asked Buildy for a version of Harvest Table with a pay-what-you-want button. In __ minutes it had ___."]
+> [YOUR RESULT: e.g. "I asked Buildy for a version of DecoThanks with a pay-what-you-want button. In __ minutes it had ___."]
 >
 > It's early, and the team is raising right now, so feedback matters more than ever. If you're a student, teacher or first-time founder, give it a try and tell them (or me) what worked and what didn't.
 >
-> And Harvest Table is open source. If you want a friendly first open-source contribution, there are "good first issue" tasks waiting: https://github.com/foojanbabaeeian/DecoMyThanksgivingTable
+> And DecoThanks is open source. If you want a friendly first open-source contribution, there are "good first issue" tasks waiting: https://github.com/foojanbabaeeian/DecoMyThanksgivingTable
 >
 > Happy Thanksgiving. I'm thankful for every one of you. 🧡
 >

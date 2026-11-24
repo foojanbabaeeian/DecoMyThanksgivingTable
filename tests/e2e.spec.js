@@ -80,3 +80,16 @@ test('phone layout: no sideways scrolling and food stays on the table', async ({
     expect(cy).toBeLessThan(canvas.y + canvas.height);
   }
 });
+
+test('table names read naturally (no "family’s’s")', async ({ page }) => {
+  const open = async (hostName) => {
+    const payload = Buffer.from(JSON.stringify({ items: [], cards: [], gratitude: '', hostName }), 'utf8').toString('base64');
+    await page.goto(`./#table=${payload}`);
+    await page.reload();
+    return (await page.locator('h1').textContent()).trim();
+  };
+  expect(await open('Fozhan’s family')).toBe('Fozhan’s family Thanksgiving table');
+  expect(await open("Fozhan's family")).toBe("Fozhan's family Thanksgiving table");
+  expect(await open('Chris')).toBe('Chris’ Thanksgiving table');
+  expect(await open('The Lee family')).toBe('The Lee family’s Thanksgiving table');
+});

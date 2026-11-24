@@ -12,10 +12,13 @@ export default defineConfig({
     channel: 'chrome',
     trace: 'retain-on-failure',
   },
+  // Builds its own copy WITHOUT Supabase keys (empty values override .env.local),
+  // so browser tests never write to the real database.
   webServer: {
-    command: 'npx vite preview --port 4180 --strictPort --host 127.0.0.1',
+    command: 'npx vite build --outDir .e2e-dist --emptyOutDir --logLevel warn && npx vite preview --outDir .e2e-dist --port 4180 --strictPort --host 127.0.0.1',
+    env: { VITE_SUPABASE_URL: '', VITE_SUPABASE_ANON_KEY: '' },
     url: 'http://127.0.0.1:4180/',
-    reuseExistingServer: !process.env.CI,
-    timeout: 30_000,
+    reuseExistingServer: false,
+    timeout: 120_000,
   },
 });

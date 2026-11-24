@@ -1,6 +1,6 @@
 # Code of Conduct
 
-Harvest Table is about gratitude, and we want working on it to feel the same way.
+DecoThanks is about gratitude, and we want working on it to feel the same way.
 
 **Do:** be welcoming to newcomers, assume good intent, give specific and kind feedback on code, and credit other people's work.
 

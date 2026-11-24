@@ -1,4 +1,4 @@
--- Harvest Table: shared Thanksgiving tables + thank-you cards.
+-- DecoThanks: shared Thanksgiving tables + thank-you cards.
 -- Paste this whole file into Supabase → SQL Editor → Run. It is safe to re-run.
 --
 -- How access works:

@@ -1,4 +1,4 @@
-# Deploying Harvest Table
+# Deploying DecoThanks
 
 There are two ways to publish. Both run from the same GitHub Actions workflow, and both only publish after the build and smoke test pass.
 

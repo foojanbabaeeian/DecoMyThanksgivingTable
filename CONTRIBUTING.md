@@ -1,4 +1,4 @@
-# Contributing to Harvest Table
+# Contributing to DecoThanks
 
 Thanks for helping! This is a small, friendly project, and first-time contributors are very welcome.
 

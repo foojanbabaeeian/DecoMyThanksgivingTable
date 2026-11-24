@@ -1,5 +1,5 @@
 name: Idea or feature
-description: Suggest something new for Harvest Table
+description: Suggest something new for DecoThanks
 labels: [enhancement]
 body:
   - type: textarea

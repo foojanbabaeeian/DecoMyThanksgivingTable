@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# One-time setup of the Harvest Table site on an Ubuntu server running nginx.
+# One-time setup of the DecoThanks site on an Ubuntu server running nginx.
 # Run it ON THE SERVER as root, from a checkout of this repo or after copying the deploy/ folder:
 #
 #   sudo bash deploy/server-setup.sh decothanks.fozhan.dev "ssh-ed25519 AAAA... github-actions-deploy"
@@ -29,7 +29,7 @@ echo "==> web root $WEBROOT"
 install -d -o deploy -g www-data -m 755 "$WEBROOT" "$WEBROOT/releases"
 if [ ! -e "$WEBROOT/current" ]; then
   install -d -o deploy -g www-data -m 755 "$WEBROOT/releases/placeholder"
-  echo '<!doctype html><title>Harvest Table</title><p>Harvest Table is setting the table. Check back soon.</p>' > "$WEBROOT/releases/placeholder/index.html"
+  echo '<!doctype html><title>DecoThanks</title><p>DecoThanks is setting the table. Check back soon.</p>' > "$WEBROOT/releases/placeholder/index.html"
   chown -R deploy:www-data "$WEBROOT/releases/placeholder"
   ln -sfn "$WEBROOT/releases/placeholder" "$WEBROOT/current"
   chown -h deploy:www-data "$WEBROOT/current"

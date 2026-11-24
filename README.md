@@ -1,10 +1,10 @@
-# Harvest Table 🦃
+# DecoThanks 🦃
 
 Decorate a Thanksgiving table, share the link, and let friends and family leave you thank-you cards.
 
 **Live:** https://foojanbabaeeian.github.io/DecoMyThanksgivingTable/
 
-![Harvest Table on two phones: a shared table full of thank-you cards, and the home page](docs/screenshots/phones.png)
+![DecoThanks on two phones: a shared table full of thank-you cards, and the home page](docs/screenshots/phones.png)
 
 - **Decorate** – drag 40+ hand-drawn dishes and decorations onto your table. Works on phones and desktops.
 - **Share** – get a short link for group chats. Guests see your table and leave a card with a food sticker.

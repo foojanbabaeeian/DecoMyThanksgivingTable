@@ -11,7 +11,7 @@ check(existsSync(join(dist, 'index.html')), 'dist/index.html is missing. Did the
 if (problems.length) finish();
 
 const html = readFileSync(join(dist, 'index.html'), 'utf8');
-check(html.includes('<title>Harvest Table'), 'index.html has no Harvest Table title');
+check(html.includes('<title>DecoThanks'), 'index.html has no DecoThanks title');
 check(!html.includes('/src/main.js'), 'index.html still points at the unbuilt /src/main.js');
 check(!html.includes('%SITE_URL%'), 'the %SITE_URL% placeholder was not replaced');
 if (process.env.SITE_URL) {

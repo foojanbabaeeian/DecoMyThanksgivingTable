@@ -1,4 +1,4 @@
-# Harvest Table on __DOMAIN__ (installed by deploy/server-setup.sh)
+# DecoThanks on __DOMAIN__ (installed by deploy/server-setup.sh)
 server {
     listen 80;
     listen [::]:80;

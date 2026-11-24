@@ -107,3 +107,28 @@ a.card-row{text-decoration:none;color:inherit}
 .home-lb{display:block;margin:16px auto 0;font-size:14px}
 @media(max-width:760px){.topbar .nav-link{display:none}.topbar nav{gap:8px}.menu-backdrop{place-items:end stretch;padding:0}.menu-backdrop .modal{width:100%;border-radius:22px 22px 0 0;max-height:88vh}.lb-list li{padding:10px}.lb-name{font-size:14px}.card-pager{font-size:11px}}
 .brand{white-space:nowrap}@media(max-width:760px){.topbar nav .share-button[data-new-table]{display:none}}
+/* Menu: warm fall paper instead of the old green panel */
+.menu-backdrop .modal{position:relative;overflow:hidden;background:linear-gradient(165deg,#fffaf1 0%,#fbeedb 55%,#f4dcbc 100%);color:var(--ink);border:2px solid #ecd0a8;box-shadow:0 30px 70px #5a361f55,inset 0 0 0 6px #fff8ec}
+.menu-backdrop .modal-x{background:#f3dcbc;color:#8f5a3d;z-index:2}
+.menu-head{position:relative;text-align:center;padding-top:4px}
+.menu-crest{display:inline-grid;place-items:center;width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffd9a8,#e9944f);font-size:34px;box-shadow:0 8px 18px #b8642f44,inset 0 -4px 0 #c96f35;animation:crest-in .6s cubic-bezier(.2,1.4,.4,1) both,crest-wobble 4s ease-in-out .8s infinite}
+.menu-title{color:#4b352c;font:600 34px Fraunces,serif;margin:10px 0 0;letter-spacing:-.02em}
+.menu-sub{margin:2px 0 0;font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--orange)}
+.menu-list{position:relative;margin-top:18px}
+.menu-list li+li{border-top:1px dashed #e2c29b}
+.menu-list li{animation:menu-item .45s cubic-bezier(.2,.8,.2,1) both}
+.menu-list li:nth-child(2){animation-delay:.05s}.menu-list li:nth-child(3){animation-delay:.1s}.menu-list li:nth-child(4){animation-delay:.15s}.menu-list li:nth-child(5){animation-delay:.2s}.menu-list li:nth-child(6){animation-delay:.25s}.menu-list li:nth-child(7){animation-delay:.3s}
+.menu-list button,.menu-list a{color:var(--ink);font-weight:500;border-radius:14px;padding:11px 8px;transition:background .2s,transform .2s}
+.menu-list button:hover,.menu-list a:hover{color:var(--ink);background:#fff3e0;transform:translateX(4px)}
+.menu-list .mi{flex:none;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;font-size:22px;opacity:1;background:#f8e2c4;box-shadow:inset 0 -3px 0 #ecc795}
+.menu-list button:hover .mi,.menu-list a:hover .mi{transform:rotate(-8deg) scale(1.06);transition:transform .2s}
+.menu-list b{color:var(--orange);font-weight:700}
+.menu-list em{background:var(--orange);color:#fff6e7;font-weight:700}
+.menu-foot{color:#a3806a}.menu-foot button,.menu-foot a{color:#9a6a4a}.menu-foot button:hover,.menu-foot a:hover{color:var(--orange)}
+.menu-leaves{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.menu-leaves span{position:absolute;top:-40px;font-size:22px;opacity:.55;left:calc(8% + var(--d) * 20%);animation:leaf-fall calc(9s + var(--d) * 1.3s) linear calc(var(--d) * -2.1s) infinite}
+@keyframes leaf-fall{0%{transform:translate(0,0) rotate(0)}50%{transform:translate(24px,55vh) rotate(160deg)}100%{transform:translate(-12px,110vh) rotate(320deg)}}
+@keyframes menu-item{from{opacity:0;transform:translateX(18px)}}
+@keyframes crest-in{from{opacity:0;transform:scale(.4) rotate(-20deg)}}
+@keyframes crest-wobble{0%,100%{transform:rotate(0)}6%{transform:rotate(-8deg)}12%{transform:rotate(6deg)}18%{transform:rotate(0)}}
+@media(prefers-reduced-motion:reduce){.menu-leaves{display:none}.menu-list li,.menu-crest{animation:none}}

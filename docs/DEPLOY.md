@@ -4,7 +4,7 @@ There are two ways to publish. Both run from the same GitHub Actions workflow, a
 
 | | GitHub Pages (default) | Your own server + domain |
 |---|---|---|
-| Address | `https://<you>.github.io/DecoMyThanksgivingTable/` | e.g. `https://thanksgiving.fozhan.dev` |
+| Address | `https://<you>.github.io/DecoMyThanksgivingTable/` | e.g. `https://decothanks.fozhan.dev` |
 | Needs | Supabase + 2 GitHub secrets | Supabase, a server, Cloudflare DNS, 7 GitHub secrets |
 | Setup time | ~10 minutes | ~25 minutes |
 
@@ -19,7 +19,7 @@ That's it. Everything below is only for publishing on your own domain as well.
 
 ---
 
-# Your own domain: thanksgiving.fozhan.dev
+# Your own domain: decothanks.fozhan.dev
 
 The site is static files (the `dist/` folder) served by nginx on the Hetzner server, with Cloudflare in front and Supabase for data. GitHub Actions builds and tests every push. A push to `main` deploys only if the tests pass.
 
@@ -62,15 +62,15 @@ Copy the `deploy/` folder to the server and run the setup with the public key:
 ```bash
 scp -P 443 -i ~/my-hub -r deploy root@195.201.39.214:/root/harvest-deploy
 ssh -p 443 -i ~/my-hub root@195.201.39.214 \
-  "bash /root/harvest-deploy/server-setup.sh thanksgiving.fozhan.dev \"$(cat ~/harvest-deploy.pub)\""
+  "bash /root/harvest-deploy/server-setup.sh decothanks.fozhan.dev \"$(cat ~/harvest-deploy.pub)\""
 ```
 
-The script creates a `deploy` user that can only write to `/var/www/thanksgiving.fozhan.dev`, adds an nginx site (it doesn't touch your other sites), runs `nginx -t` before reloading, and asks certbot for a certificate. At the end it prints the server's host key line for the next step.
+The script creates a `deploy` user that can only write to `/var/www/decothanks.fozhan.dev`, adds an nginx site (it doesn't touch your other sites), runs `nginx -t` before reloading, and asks certbot for a certificate. At the end it prints the server's host key line for the next step.
 
 **One thing to check, because SSH and HTTPS share port 443 through sslh:** nginx may listen for HTTPS on a different internal port than 443. Compare the new site with an existing one:
 
 ```bash
-grep -h "listen" /etc/nginx/sites-enabled/thanksgiving.fozhan.dev /etc/nginx/sites-enabled/<your travelhub site>
+grep -h "listen" /etc/nginx/sites-enabled/decothanks.fozhan.dev /etc/nginx/sites-enabled/<your travelhub site>
 ```
 
 If travelhub uses something like `listen 127.0.0.1:4443 ssl;` and the new file says `listen 443 ssl;`, change the new file to match, then `nginx -t && systemctl reload nginx`.
@@ -91,11 +91,11 @@ Fork repo → **Settings → Secrets and variables → Actions**:
 | `DEPLOY_SSH_KEY` | contents of `~/harvest-deploy` (the private key) |
 | `DEPLOY_KNOWN_HOSTS` | the line the setup script printed, e.g. `[195.201.39.214]:443 ssh-ed25519 AAAA…` |
 
-Also add the **variable** (not secret) `SITE_DOMAIN` = `thanksgiving.fozhan.dev`, so link previews point at your domain instead of the GitHub Pages address.
+Also add the **variable** (not secret) `SITE_DOMAIN` = `decothanks.fozhan.dev`, so link previews point at your domain instead of the GitHub Pages address.
 
 ## 5. Deploy and check
 
-Push to `main`, or run **Actions → Test and deploy → Run workflow**. The deploy job checks that `https://thanksgiving.fozhan.dev` answers with the new page and fails the run if it doesn't.
+Push to `main`, or run **Actions → Test and deploy → Run workflow**. The deploy job checks that `https://decothanks.fozhan.dev` answers with the new page and fails the run if it doesn't.
 
 Then run through this checklist on a real phone before posting the link anywhere:
 
@@ -111,13 +111,13 @@ Then run through this checklist on a real phone before posting the link anywhere
 Each deploy keeps the last five releases. To roll back on the server:
 
 ```bash
-ls -1t /var/www/thanksgiving.fozhan.dev/releases
-ln -sfn /var/www/thanksgiving.fozhan.dev/releases/<older-id> /var/www/thanksgiving.fozhan.dev/current
+ls -1t /var/www/decothanks.fozhan.dev/releases
+ln -sfn /var/www/decothanks.fozhan.dev/releases/<older-id> /var/www/decothanks.fozhan.dev/current
 ```
 
 ## Alternative: Cloudflare Pages
 
-If you'd rather not use the server, Cloudflare Pages can host the same `dist/` folder: connect the repo, build command `npm run build`, output `dist`, add the two `VITE_SUPABASE_*` variables, and set the custom domain `thanksgiving.fozhan.dev`. The GitHub Actions test job still guards pull requests.
+If you'd rather not use the server, Cloudflare Pages can host the same `dist/` folder: connect the repo, build command `npm run build`, output `dist`, add the two `VITE_SUPABASE_*` variables, and set the custom domain `decothanks.fozhan.dev`. The GitHub Actions test job still guards pull requests.
 
 ## Pipeline security
 

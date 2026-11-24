@@ -109,9 +109,9 @@ jobs:
     timeout-minutes: 10
     environment:
       name: production
-      url: https://${{ vars.SITE_DOMAIN || 'thanksgiving.fozhan.dev' }}/
+      url: https://${{ vars.SITE_DOMAIN || 'decothanks.fozhan.dev' }}/
     env:
-      DOMAIN: ${{ vars.SITE_DOMAIN || 'thanksgiving.fozhan.dev' }}
+      DOMAIN: ${{ vars.SITE_DOMAIN || 'decothanks.fozhan.dev' }}
       SSH_HOST: ${{ secrets.DEPLOY_HOST }}
       SSH_PORT: ${{ secrets.DEPLOY_PORT || '22' }}
       SSH_USER: ${{ secrets.DEPLOY_USER || 'deploy' }}

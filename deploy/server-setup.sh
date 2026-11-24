@@ -2,7 +2,7 @@
 # One-time setup of the Harvest Table site on an Ubuntu server running nginx.
 # Run it ON THE SERVER as root, from a checkout of this repo or after copying the deploy/ folder:
 #
-#   sudo bash deploy/server-setup.sh thanksgiving.fozhan.dev "ssh-ed25519 AAAA... github-actions-deploy"
+#   sudo bash deploy/server-setup.sh decothanks.fozhan.dev "ssh-ed25519 AAAA... github-actions-deploy"
 #
 # What it does (safe to re-run):
 #   1. creates a "deploy" user that can only write to /var/www/<domain>

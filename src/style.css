@@ -210,3 +210,23 @@ a.card-row{text-decoration:none;color:inherit}
   .placed-item.fx-steam::before,.placed-item.fx-steam::after,.placed-item.fx-flicker::after{display:none}
 }
 .table-canvas .card-sticker{width:max(46px,8.5cqw);height:max(46px,8.5cqw)}
+/* Share sheet */
+.share-quick{display:grid;grid-template-columns:repeat(auto-fit,minmax(88px,1fr));gap:8px;margin:14px 0 4px}
+.share-btn{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;border-radius:16px;background:#fff3e2;border:1px solid #efd6b4;color:var(--ink);font-size:13px;font-weight:600;text-decoration:none;transition:transform .15s,background .15s}
+.share-btn:hover{background:#fde8cc;transform:translateY(-2px)}
+.sb-ico{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-size:20px;background:#fffaf1;box-shadow:inset 0 -2px 0 #efd6b4}
+.sb-ico.wa{background:#25d366;color:#fff;font-size:22px;box-shadow:none}
+.share-msg{margin-top:14px;background:#fff7ea;border:1px solid #efd6b4;border-radius:16px;padding:12px}
+.tpl-chips{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.chip{padding:7px 14px;border-radius:20px;background:#f6e4cb;color:#8f5a3d;font-size:13px;font-weight:600}
+.chip.on{background:var(--orange);color:#fff6e8}
+#share-msg{width:100%;border:1px solid #e3d2bb;border-radius:12px;padding:10px 12px;font:16px/1.45 'DM Sans',sans-serif;color:var(--ink);background:#fffdf8;resize:vertical}
+.share-msg .secondary{margin-top:8px;padding:9px 14px}
+.share-qr{display:flex;gap:16px;align-items:center;margin-top:14px;padding:14px;border-radius:16px;background:linear-gradient(135deg,#fff3e2,#fbe2c4)}
+.share-qr .qr{flex:none;width:118px;height:118px;border-radius:12px;box-shadow:0 6px 14px #8a5a3a26}
+.share-qr b{font:600 18px Fraunces,serif}.share-qr p{margin:4px 0 10px;color:#7d6253;font-size:14px;line-height:1.4}
+.share-qr .primary{padding:10px 14px;font-size:14px}
+.share-details{margin-top:14px;border-top:1px dashed #e2c29b;padding-top:10px}
+.share-details summary{cursor:pointer;font-weight:600;color:#8f5a3d;padding:6px 0}
+.share-details[open] summary{margin-bottom:10px}
+@media(max-width:760px){.share-qr{flex-direction:column;text-align:center}.share-qr .qr{width:150px;height:150px}}

@@ -131,3 +131,21 @@ test('animations play normally', async ({ page }) => {
   await expect(page.locator('.burst span').first()).toBeAttached();
   await expect(page.locator('#table-canvas .placed-item.fx-steam').first()).toBeAttached();
 });
+
+test('share sheet: quick buttons, message templates and a make-your-own line', async ({ page }) => {
+  await page.goto('./');
+  await page.getByRole('button', { name: /Create my table/ }).click();
+  await page.getByRole('button', { name: 'Share table' }).first().click();
+  await page.locator('#host-name').fill('Lee family');
+  await page.getByRole('button', { name: /Get my share link/ }).click();
+  const msg = page.locator('#share-msg');
+  await expect(msg).toContainText('Lee family');
+  await expect(msg).toContainText('Make one here');
+  await page.getByRole('button', { name: 'Coworkers' }).click();
+  await expect(page.locator('#share-msg')).toContainText('make your own');
+  const wa = await page.locator('[data-quick=whatsapp]').getAttribute('href');
+  expect(wa).toMatch(/^https:\/\/wa\.me\/\?text=/);
+  expect(decodeURIComponent(wa)).toContain('#table=');
+  await expect(page.locator('[data-quick=email]')).toHaveAttribute('href', /^mailto:/);
+  await expect(page.locator('[data-story]')).toBeVisible();
+});

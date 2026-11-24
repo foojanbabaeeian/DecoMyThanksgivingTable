@@ -1,4 +1,5 @@
 import './style.css';
+import { TEMPLATES, shareLinks, qrSvg, storyImage } from './share.js';
 import { hasBackend, createTable, updateTable, loadTable, loadCards, loadOwnerCards, addCard, deleteCard, fetchLeaderboard } from './supabase.js';
 
 const BASE_URL = import.meta.env.BASE_URL;
@@ -277,7 +278,26 @@ function modal() {
     const n = state.cards.length;
     body = `<h2>Thank-you cards <small>${n}</small></h2>${n?`<div class="card-list">${state.cards.map(c=>`<button class="card-row" data-read="${esc(c.id)}"><span class="card-row-icon">${cardIcon(c)}</span><span><strong>${c.sealed?'💌 Sealed card':esc(c.message)}</strong><small>${c.mine?'Your card · only you and the host can read it':c.sealed?'Only the host can read it':esc(cardFrom(c))}</small></span></button>`).join('')}</div>${state.isOwner?'':`<p class="modal-note">Only ${state.hostName?esc(state.hostName):'the host'} can read these cards. You can always see the ones you wrote.</p>`}`:`<p class="modal-sub">No cards yet. ${state.isOwner?'Share your link so friends can leave some!':'Be the first to leave one!'}</p>`}<div class="modal-actions">${state.isOwner?'<button class="secondary" data-share>Share my link</button>':''}<button class="primary" data-write>Write a card <span>♡</span></button></div>`;
   } else if (m.type === 'share') {
-    body = `<h2>Invite people to your table</h2><p class="modal-sub">Anyone with the link can see your table and leave you a thank-you card.</p><label class="field"><span>Whose table is this?</span><input id="host-name" maxlength="40" value="${esc(state.hostName)}" placeholder="e.g. The Garcia family"/></label>${state.shareUrl?`<div class="share-link"><input id="share-url" readonly value="${esc(state.shareUrl)}"/><button class="primary" data-copy>Copy</button></div>`:''}${hasBackend?`<label class="check listed-check"><input type="checkbox" id="listed" ${state.listed?'checked':''}/><span>Show my table on the public leaderboard <small>Shows your table name and card count.</small></span></label>`:''}<p class="form-error" ${m.error?'':'hidden'}>${esc(m.error||'')}</p>${hasBackend?'':'<p class="modal-note">Card syncing isn’t connected on this site yet, so this link carries a snapshot of your table. Guests can read it, but their cards won’t reach you until Supabase is set up.</p>'}<div class="modal-actions">${state.shareUrl&&navigator.share?'<button class="secondary" data-native-share>Share…</button>':''}<button class="primary" data-make-link>${state.shareUrl?'Save &amp; copy link':'Get my share link'} <span>↗</span></button></div>`;
+    const tplKey = m.tpl || 'family';
+    const msg = state.shareUrl ? TEMPLATES[tplKey].text(state.hostName ? possessive(state.hostName) : 'my', state.shareUrl, pageBase()) : '';
+    const links = shareLinks(msg, `${hostLabel()} Thanksgiving table 🦃`);
+    const details = `<label class="field"><span>Whose table is this?</span><input id="host-name" maxlength="40" value="${esc(state.hostName)}" placeholder="e.g. The Garcia family"/></label>${hasBackend?`<label class="check listed-check"><input type="checkbox" id="listed" ${state.listed?'checked':''}/><span>Show my table on the public leaderboard <small>Shows your table name and card count.</small></span></label>`:''}<p class="form-error" ${m.error?'':'hidden'}>${esc(m.error||'')}</p>${hasBackend?'':'<p class="modal-note">Card syncing isn’t connected on this site yet, so this link carries a snapshot of your table. Guests can read it, but their cards won’t reach you until Supabase is set up.</p>'}`;
+    body = !state.shareUrl
+      ? `<h2>Invite people to your table</h2><p class="modal-sub">Anyone with the link can see your table and leave you a sealed thank-you card.</p>${details}<div class="modal-actions"><button class="primary" data-make-link>Get my share link <span>↗</span></button></div>`
+      : `<h2>Invite people to your table</h2><p class="modal-sub">Send it to the people you’re thankful for.</p>
+<div class="share-link"><input id="share-url" readonly value="${esc(state.shareUrl)}"/><button class="primary" data-copy>Copy</button></div>
+<div class="share-quick">
+<a class="share-btn" data-quick="whatsapp" href="${esc(links.whatsapp)}" target="_blank" rel="noopener"><span class="sb-ico wa">✆</span>WhatsApp</a>
+<a class="share-btn" data-quick="sms" href="${esc(links.sms)}"><span class="sb-ico">💬</span>Messages</a>
+<a class="share-btn" data-quick="email" href="${esc(links.email)}"><span class="sb-ico">✉️</span>Email</a>
+${navigator.share?'<button class="share-btn" data-native-share><span class="sb-ico">📤</span>More</button>':''}
+</div>
+<div class="share-msg"><div class="tpl-chips" role="group" aria-label="Message for">${Object.entries(TEMPLATES).map(([k,t])=>`<button class="chip ${k===tplKey?'on':''}" data-tpl="${k}" aria-pressed="${k===tplKey}">${t.label}</button>`).join('')}</div>
+<textarea id="share-msg" rows="6" aria-label="Message to send">${esc(msg)}</textarea>
+<button class="secondary" data-copy-msg>Copy message</button></div>
+<div class="share-qr">${qrSvg(state.shareUrl)}<div><b>Sharing at the dinner table?</b><p>Guests can scan this with their phone camera to leave a card.</p><button class="primary" data-story>Save story image <span>↓</span></button></div></div>
+<details class="share-details"><summary>Table name &amp; leaderboard</summary>${details}<div class="modal-actions"><button class="secondary" data-make-link>Save changes</button></div></details>
+<div class="modal-actions"><button class="primary" data-close>Done</button></div>`;
   } else if (m.type === 'menu') {
     const item = (attr, icon, label, extra='') => `<li><button ${attr}><span class="mi">${icon}</span><span class="ml">${label}</span>${extra}<b>›</b></button></li>`;
     const count = myTables().length;
@@ -358,11 +378,24 @@ function bind(){
     state.hostName = (document.querySelector('#host-name')?.value || '').trim().slice(0, 40);
     const listedBox = document.querySelector('#listed'); if (listedBox) state.listed = listedBox.checked;
     b.disabled = true; b.textContent = 'Saving…';
-    try { const url = await ensureShared(); const copied = await copyText(url); state.modal = {type:'share'}; render(); toast(copied ? 'Link copied! Send it to your people.' : 'Your link is ready. Copy it below.'); if (copied) burstAt(document.querySelector('#share-url'), ['💌','✨','🧡'], 12); }
+    try { const url = await ensureShared(); const copied = await copyText(url); state.modal = {type:'share', tpl: state.modal?.tpl}; render(); toast(copied ? 'Link copied! Send it to your people.' : 'Your link is ready. Copy it below.'); if (copied) burstAt(document.querySelector('#share-url'), ['💌','✨','🧡'], 12); }
     catch (err) { console.warn(err); state.modal = {type:'share', error: err.message}; render(); }
   });
   on('[data-copy]', async (e,b)=>{ const input=document.querySelector('#share-url'); input?.select(); const copied = await copyText(state.shareUrl); toast(copied ? 'Link copied!' : 'Press Ctrl+C / ⌘C to copy the link.'); if (copied) burstAt(b, ['💌','✨','🧡'], 12); });
-  on('[data-native-share]', async ()=>{ try { await navigator.share({ title:`${hostLabel()} Thanksgiving table`, text:'Pull up a chair and leave me a thank-you card on my Thanksgiving table 🦃', url:state.shareUrl }); } catch { /* user cancelled */ } });
+  on('[data-native-share]', async ()=>{ const text = document.querySelector('#share-msg')?.value || state.shareUrl; try { await navigator.share({ title:`${hostLabel()} Thanksgiving table`, text }); } catch { /* user cancelled */ } });
+  on('[data-tpl]', (e,b)=>{ state.modal = { ...state.modal, type:'share', tpl:b.dataset.tpl }; render(); });
+  on('[data-copy-msg]', async (e,b)=>{ const copied = await copyText(document.querySelector('#share-msg')?.value || ''); toast(copied ? 'Message copied! Paste it anywhere.' : 'Select the message and copy it.'); if (copied) burstAt(b, ['💌','✨','🧡'], 12); });
+  document.querySelector('#share-msg')?.addEventListener('input', e=>{ const l = shareLinks(e.target.value, `${hostLabel()} Thanksgiving table 🦃`); document.querySelectorAll('[data-quick]').forEach(a=>{ a.href = l[a.dataset.quick]; }); });
+  on('[data-story]', async (e,b)=>{
+    b.disabled = true; const label = b.innerHTML; b.textContent = 'Making your image…';
+    try {
+      const blob = await storyImage({ title: state.hostName ? possessive(state.hostName) : 'My', items: arrangement().items, cardCount: state.cards.length, url: state.shareUrl, home: pageBase(), tableArt: `${BASE_URL}thanksgiving-table.webp` });
+      const file = new File([blob], 'decothanks-story.png', { type: 'image/png' });
+      if (navigator.canShare?.({ files:[file] })) { try { await navigator.share({ files:[file], text: document.querySelector('#share-msg')?.value || state.shareUrl }); } catch { /* cancelled */ } }
+      else { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'decothanks-story.png'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); toast('Story image saved 📸'); }
+    } catch (err) { console.warn(err); toast('Couldn’t make the image. Try again?'); }
+    b.disabled = false; b.innerHTML = label;
+  });
   on('[data-delete-card]', async (e,b)=>{
     const id = b.dataset.deleteCard;
     if (!confirm('Remove this card from your table?')) return;

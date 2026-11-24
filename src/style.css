@@ -230,3 +230,4 @@ a.card-row{text-decoration:none;color:inherit}
 .share-details summary{cursor:pointer;font-weight:600;color:#8f5a3d;padding:6px 0}
 .share-details[open] summary{margin-bottom:10px}
 @media(max-width:760px){.share-qr{flex-direction:column;text-align:center}.share-qr .qr{width:150px;height:150px}}
+.settings-link{display:block;width:100%;text-align:left;background:none;color:#8f5a3d;font-weight:600;font-size:13px;padding:4px 2px 16px}.settings-link:hover{color:var(--orange)}

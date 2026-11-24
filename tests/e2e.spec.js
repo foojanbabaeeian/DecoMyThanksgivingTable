@@ -149,3 +149,15 @@ test('share sheet: quick buttons, message templates and a make-your-own line', a
   await expect(page.locator('[data-quick=email]')).toHaveAttribute('href', /^mailto:/);
   await expect(page.locator('[data-story]')).toBeVisible();
 });
+
+test('table settings: rename the table from the studio and the menu', async ({ page }) => {
+  await page.goto('./');
+  await page.getByRole('button', { name: /Create my table/ }).click();
+  await page.locator('.settings-link').click();
+  await page.locator('#settings-name').fill('Rivera family');
+  await page.locator('[data-save-settings]').click();
+  await expect(page.locator('.workspace-top h3')).toContainText('Rivera family’s Thanksgiving table');
+  await page.getByRole('button', { name: 'Open menu' }).click();
+  await page.locator('.menu-list [data-menu=settings]').click();
+  await expect(page.locator('#settings-name')).toHaveValue('Rivera family');
+});

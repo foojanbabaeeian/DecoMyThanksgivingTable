@@ -101,6 +101,8 @@ test('phone: the card form fits and the send button is reachable', async ({ page
   await page.reload();
   await page.getByRole('button', { name: /Write a thank-you card/ }).click();
   const send = page.getByRole('button', { name: /Place card on table/ });
+  // Wait for the sheet's slide-up animation so we measure where it finally sits.
+  await page.locator('.modal').evaluate(el => Promise.all(el.getAnimations().map(x => x.finished)));
   const box = await send.boundingBox();
   expect(box.y + box.height).toBeLessThanOrEqual(667);
   const sheet = await page.locator('.modal').boundingBox();

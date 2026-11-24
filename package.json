@@ -8,9 +8,11 @@
     "build": "vite build",
     "preview": "vite preview",
     "smoke": "node scripts/smoke.mjs",
-    "check": "npm run build && npm run smoke"
+    "check": "npm run build && npm run smoke && npm run test:e2e",
+    "test:e2e": "playwright test"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.1",
     "vite": "^8.3.8"
   },
   "dependencies": {

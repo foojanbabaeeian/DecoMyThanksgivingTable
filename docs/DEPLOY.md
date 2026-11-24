@@ -118,3 +118,22 @@ ln -sfn /var/www/thanksgiving.fozhan.dev/releases/<older-id> /var/www/thanksgivi
 ## Alternative: Cloudflare Pages
 
 If you'd rather not use the server, Cloudflare Pages can host the same `dist/` folder: connect the repo, build command `npm run build`, output `dist`, add the two `VITE_SUPABASE_*` variables, and set the custom domain `thanksgiving.fozhan.dev`. The GitHub Actions test job still guards pull requests.
+
+## Pipeline security
+
+Already built into the repo:
+
+- Every GitHub Action is pinned to a full commit SHA, and Dependabot (`.github/dependabot.yml`) opens weekly PRs to update actions and npm packages.
+- `npm ci --ignore-scripts` installs exactly the lockfile without running package install scripts, then `npm audit` fails the build on high-severity issues in production dependencies.
+- Build, smoke test and five real-browser tests (`tests/e2e.spec.js`) must pass before anything publishes. Browser tests run against a build without database keys, so they never touch real data.
+- The workflow token is read-only; only the Pages job gets `pages: write`. Pull requests, including ones from forks, never receive secrets and never deploy.
+- Secrets reach scripts only through environment variables. The server key is deleted from the runner after use, the server's host key is pinned, and deploys log in as a `deploy` user that can only write the site folder.
+- CodeQL scans the JavaScript and the workflows on every PR and weekly.
+- In the database, table edit keys are stored only as SHA-256 hashes, and anyone can only reach the data through Row Level Security and three functions.
+
+Turn these on once in the fork's **Settings** (they're account settings, so they can't live in the repo):
+
+1. **Rules → Rulesets → New branch ruleset** for `main`: require a pull request, require the status checks `test` and `analyze`, block force pushes and deletions.
+2. **Environments → production** (and **github-pages**): under *Deployment branches*, allow only `main`. Optionally add yourself as a required reviewer for `production`.
+3. **Code security**: turn on Dependabot alerts, Dependabot security updates, secret scanning and push protection.
+4. **Actions → General**: set *Workflow permissions* to "Read repository contents", and require approval for workflows from first-time contributors.

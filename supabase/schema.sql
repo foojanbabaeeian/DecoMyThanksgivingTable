@@ -3,7 +3,7 @@
 --
 -- How access works:
 --   * Anyone with a table's link can read it and its cards, and leave a card.
---   * Only the person who created a table (they hold its secret edit_token in
+--   * Only the person who created a table (they hold its secret edit key in
 --     their browser) can change the table or remove cards from it.
 
 create extension if not exists pgcrypto;
@@ -15,7 +15,21 @@ create table if not exists public.shared_tables (
   updated_at timestamptz not null default now()
 );
 alter table public.shared_tables add column if not exists host_name text;
-alter table public.shared_tables add column if not exists edit_token uuid not null default gen_random_uuid();
+-- Each table's edit key is stored only as a SHA-256 hash. The browser that created
+-- the table keeps the real key, so even full database access can't edit tables.
+alter table public.shared_tables add column if not exists edit_token_hash bytea;
+-- Upgrade from earlier versions of this file, which stored the key in plain text.
+do $$
+begin
+  if exists (select 1 from information_schema.columns
+              where table_schema = 'public' and table_name = 'shared_tables' and column_name = 'edit_token') then
+    update public.shared_tables
+       set edit_token_hash = sha256(convert_to(edit_token::text, 'UTF8'))
+     where edit_token_hash is null and edit_token is not null;
+    alter table public.shared_tables drop column edit_token;
+  end if;
+end;
+$$;
 -- Hosts opt in to the public leaderboard.
 alter table public.shared_tables add column if not exists listed boolean not null default false;
 
@@ -57,7 +71,7 @@ create policy "Anyone can read thank-you cards"
 create policy "Anyone can send thank-you cards"
   on public.thank_you_cards for insert with check (true);
 
--- Never expose edit_token, and route all table writes through the functions below.
+-- Never expose the key hash, and route all table writes through the functions below.
 revoke all on public.shared_tables from anon, authenticated;
 grant select (id, host_name, arrangement, listed, created_at, updated_at) on public.shared_tables to anon, authenticated;
 revoke all on public.thank_you_cards from anon, authenticated;
@@ -69,13 +83,21 @@ drop function if exists public.update_table(uuid, uuid, text, jsonb);
 
 create or replace function public.create_table(p_host_name text, p_arrangement jsonb, p_listed boolean default false)
 returns table (id uuid, edit_token uuid)
-language sql
+language plpgsql
 security definer
 set search_path = public
 as $$
-  insert into public.shared_tables (host_name, arrangement, listed)
-  values (left(nullif(btrim(p_host_name), ''), 60), coalesce(p_arrangement, '{}'::jsonb), coalesce(p_listed, false))
-  returning shared_tables.id, shared_tables.edit_token;
+#variable_conflict use_column
+declare
+  v_token uuid := gen_random_uuid();
+  v_id uuid;
+begin
+  insert into public.shared_tables (host_name, arrangement, listed, edit_token_hash)
+  values (left(nullif(btrim(p_host_name), ''), 60), coalesce(p_arrangement, '{}'::jsonb), coalesce(p_listed, false),
+          sha256(convert_to(v_token::text, 'UTF8')))
+  returning shared_tables.id into v_id;
+  return query select v_id, v_token;
+end;
 $$;
 
 create or replace function public.update_table(p_id uuid, p_token uuid, p_host_name text, p_arrangement jsonb, p_listed boolean default null)
@@ -90,7 +112,8 @@ as $$
            arrangement = coalesce(p_arrangement, '{}'::jsonb),
            listed = coalesce(p_listed, shared_tables.listed),
            updated_at = now()
-     where shared_tables.id = p_id and shared_tables.edit_token = p_token
+     where shared_tables.id = p_id
+       and shared_tables.edit_token_hash = sha256(convert_to(p_token::text, 'UTF8'))
     returning 1
   )
   select exists (select 1 from updated);
@@ -125,7 +148,7 @@ as $$
      where c.id = p_card_id
        and c.table_id = p_table_id
        and t.id = p_table_id
-       and t.edit_token = p_token
+       and t.edit_token_hash = sha256(convert_to(p_token::text, 'UTF8'))
     returning 1
   )
   select exists (select 1 from deleted);

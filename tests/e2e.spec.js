@@ -113,3 +113,21 @@ test('phone: the card form fits and the send button is reachable', async ({ page
   await send.click();
   await expect(page.locator('.card-sticker')).toHaveCount(1);
 });
+
+test('animations respect reduced motion', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('./');
+  await page.getByRole('button', { name: /Create my table/ }).click();
+  await page.getByRole('button', { name: /Build the ultimate feast/ }).click();
+  await expect(page.locator('.burst')).toHaveCount(0);
+  const anim = await page.locator('#table-canvas .placed-item.pop-in').first().evaluate(el => getComputedStyle(el).animationName);
+  expect(anim).toBe('none');
+});
+
+test('animations play normally', async ({ page }) => {
+  await page.goto('./');
+  await page.getByRole('button', { name: /Create my table/ }).click();
+  await page.getByRole('button', { name: /Build the ultimate feast/ }).click();
+  await expect(page.locator('.burst span').first()).toBeAttached();
+  await expect(page.locator('#table-canvas .placed-item.fx-steam').first()).toBeAttached();
+});

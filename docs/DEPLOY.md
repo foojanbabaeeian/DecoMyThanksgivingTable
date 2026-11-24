@@ -60,8 +60,8 @@ ssh-keygen -t ed25519 -f ~/harvest-deploy -C "github-actions harvest-table" -N "
 Copy the `deploy/` folder to the server and run the setup with the public key:
 
 ```bash
-scp -P 443 -i ~/.ssh/<your-admin-key> -r deploy root@<your-server-ip>:/root/harvest-deploy
-ssh -p 443 -i ~/.ssh/<your-admin-key> root@<your-server-ip> \
+scp -P 443 -i ~/.ssh/id_ed25519 -r deploy root@<your-server-ip>:/root/harvest-deploy
+ssh -p 443 -i ~/.ssh/id_ed25519 root@<your-server-ip> \
   "bash /root/harvest-deploy/server-setup.sh thanks.example.com \"$(cat ~/harvest-deploy.pub)\""
 ```
 

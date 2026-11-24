@@ -71,7 +71,7 @@ function announceUnlocks() {
   const seen = Number(store.get(SEEN_KEY(state.remoteId)) || 0);
   const fresh = UNLOCKS.filter(u => u.at > seen && u.at <= n);
   store.set(SEEN_KEY(state.remoteId), String(n));
-  if (fresh.length) setTimeout(() => toast(`✦ Unlocked: ${fresh.map(u => u.label).join(', ')}!`), 400);
+  if (fresh.length) setTimeout(() => { toast(`✦ Unlocked: ${fresh.map(u => u.label).join(', ')}!`); burst(innerWidth / 2, innerHeight / 2.4, ['🥧','🍂','✨','🦃','🍁'], 26); }, 400);
 }
 // "Fozhan’s family" stays as typed; "Chris" → "Chris’"; "The Lee family" → "The Lee family’s".
 function possessive(name) { const n = String(name || '').trim(); if (/['’]s\b/i.test(n)) return n; return /s$/i.test(n) ? `${n}’` : `${n}’s`; }
@@ -86,6 +86,34 @@ function snapshotKey() { return JSON.stringify({ a:arrangement(), h:state.hostNa
 function pageBase() { return `${location.origin}${location.pathname}`; }
 function tableLink() { return state.remoteId ? `${pageBase()}?t=${state.remoteId}` : `${pageBase()}#table=${encodeTable({ ...arrangement(), cards:state.cards, hostName:state.hostName })}`; }
 
+// Little celebrations. Skipped entirely for people who ask for reduced motion.
+const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+const HOT_FOOD = new Set(['main','ham','chicken','beef','veg','mash','gravy','stuffing','yams','cocoa','cider','rolls','bread','cornbread','pie','applepie','pecan','rollsSweet']);
+let pendingFx = null;   // { uid, cls } applied to one placed piece on the next render
+function burst(x, y, emojis = ['🍂','🍁','✨','💛'], count = 14) {
+  if (reduceMotion()) return;
+  const layer = document.createElement('div');
+  layer.className = 'burst'; layer.setAttribute('aria-hidden', 'true');
+  layer.style.left = `${x}px`; layer.style.top = `${y}px`;
+  for (let i = 0; i < count; i++) {
+    const s = document.createElement('span');
+    const angle = (Math.PI * 2 * i) / count + Math.random() * 0.6;
+    const dist = 50 + Math.random() * 70;
+    s.textContent = emojis[i % emojis.length];
+    s.style.setProperty('--dx', `${Math.cos(angle) * dist}px`);
+    s.style.setProperty('--dy', `${Math.sin(angle) * dist - 30}px`);
+    s.style.setProperty('--r', `${Math.round(Math.random() * 360 - 180)}deg`);
+    s.style.animationDelay = `${Math.random() * 80}ms`;
+    layer.appendChild(s);
+  }
+  document.body.appendChild(layer);
+  setTimeout(() => layer.remove(), 1300);
+}
+function burstAt(el, emojis, count) {
+  if (!el) return;
+  const r = el.getBoundingClientRect();
+  burst(r.left + r.width / 2, r.top + r.height / 2, emojis, count);
+}
 function toast(message) {
   document.querySelector('.toast')?.remove();
   const el = document.createElement('div');
@@ -222,7 +250,7 @@ function cardLayer() {
 }
 function studio() { const visible = foods.filter(x=>state.filter==='all'||x[2]===state.filter); return `<main class="studio-page">${header('studio')}<div class="studio-layout"><aside class="studio-aside"><div class="aside-top"><div><p class="eyebrow">Your canvas</p><h2>Table studio</h2></div><span class="count"><b>${state.items.length}</b><small>pieces</small></span></div><p class="aside-desc">Choose a piece, then give it a place at the table. There is no wrong way to gather.</p><div class="progress"><span style="width:${Math.min(100,Math.max(8,state.items.length*8))}%"></span></div><button class="received-cards" data-cards><span>♡</span><div><b>${state.cards.length}</b><small>thank-you cards received</small></div></button>${unlockWidget()}<div class="filter-list">${Object.keys(categoryNames).map(k=>`<button class="filter ${state.filter===k?'selected':''}" data-filter="${k}"><span>${k==='all'?'✦':categoryArt[k]}</span>${categoryNames[k]}<b>${k==='all'?foods.length:foods.filter(x=>x[2]===k).length}</b></button>`).join('')}</div><button class="random-button" data-random><span>✧</span> Surprise me</button><button class="pantry-link" data-page="pantry">Browse all pieces <span>→</span></button></aside><section class="workspace"><div class="workspace-top"><div><p class="eyebrow">Thursday, November 26</p><h3>${esc(hostLabel())} Thanksgiving table <span>·</span> <em>${state.remoteId?'shared · saves automatically':'just getting started'}</em></h3></div><div class="workspace-actions"><button class="icon-button" data-undo title="Undo">↶</button><button class="icon-button" data-clear title="Clear table">⌫</button><button class="share-button" data-share>Share table</button><button class="finish-button" data-finish>Finish decorating <span>→</span></button></div></div><div class="table-stage"><div class="table-canvas" id="table-canvas" style="--zoom:${state.zoom}">${tableArt()}<div class="placement-layer">${state.items.map(item=>placed(item)).join('')}${cardLayer()}<div class="drop-hint ${state.items.length?'hidden':''}"><span>✦</span><strong>Start with a little something</strong><small>Pick a favorite from the pantry</small></div></div></div></div><div class="studio-bottom"><div class="quick-tools"><button data-rotate>↻ Rotate</button><button data-duplicate>＋ Duplicate</button><button data-delete>× Remove</button></div><div class="zoom-tools"><button data-zoom="-">−</button><span>${Math.round(state.zoom*100)}%</span><button data-zoom="+">＋</button></div><div class="gratitude"><span>♡</span><button data-write>Write a thank-you card</button><button data-share class="gratitude-share">Invite friends to write one →</button></div></div></section><aside class="mini-pantry"><div class="mini-heading"><h3>Pick a piece</h3><button data-page="pantry">View all</button></div><div class="mini-tabs"><button class="mini-tab ${state.filter==='all'?'active':''}" data-filter="all">All</button><button class="mini-tab ${state.filter==='mains'?'active':''}" data-filter="mains">Mains</button><button class="mini-tab ${state.filter==='sides'?'active':''}" data-filter="sides">Sides</button><button class="mini-tab ${state.filter==='desserts'?'active':''}" data-filter="desserts">Sweet</button></div><div class="mini-grid">${visible.slice(0,12).map(item=>foodCard(item)).join('')}</div><button class="feast-button" data-feast><span>✦</span> Build the ultimate feast</button></aside></div></main>`; }
 function guest() { const n = state.cards.length; const who = state.hostName ? esc(state.hostName) : 'the host'; return `<main class="guest-page">${guestHeader()}<section class="guest-layout"><div class="guest-copy"><p class="eyebrow">You’re invited to the table</p><h1>${state.hostName?esc(possessive(state.hostName)):'A friend’s'} <em>Thanksgiving table</em></h1><p>Leave ${who} a thank-you card. It’ll sit right on the table next to everyone else’s, sealed so only ${who} can read it.</p><div class="guest-actions"><button class="primary" data-write>Write a thank-you card <span>♡</span></button><button class="secondary" data-cards>See the cards <span>${n}</span></button></div><button class="text-link" data-new-table>Make your own table →</button></div><div class="table-stage guest-stage"><div class="table-canvas">${tableArt()}<div class="placement-layer">${state.items.map(item=>placed(item, true)).join('')}${cardLayer()}${n?'':`<div class="drop-hint"><span>♡</span><strong>No cards yet</strong><small>Be the first to leave one</small></div>`}</div></div></div></section></main>`; }
-function placed(x, readonly=false) { return `<div class="placed-item ${readonly?'readonly':''} ${!readonly&&state.selected===x.uid?'chosen':''}" data-uid="${x.uid}" style="left:${x.x}%;top:${x.y}%;transform:translate(-50%,-50%) rotate(${x.rotate}deg) scale(${x.scale});z-index:${x.z}"><img src="${esc(x.asset)}" alt="${esc(x.name)}" draggable="false"/>${readonly?'':`<button class="item-remove" data-item-delete="${x.uid}">×</button>`}</div>`; }
+function placed(x, readonly=false) { const fx = pendingFx && pendingFx.uid === x.uid ? pendingFx.cls : ''; return `<div class="placed-item ${readonly?'readonly':''} ${!readonly&&state.selected===x.uid?'chosen':''} ${HOT_FOOD.has(x.kind)?'fx-steam':''} ${x.kind==='candle'?'fx-flicker':''} ${fx}" data-uid="${x.uid}" style="left:${x.x}%;top:${x.y}%;transform:translate(-50%,-50%) rotate(${x.rotate}deg) scale(${x.scale});z-index:${x.z}"><img src="${esc(x.asset)}" alt="${esc(x.name)}" draggable="false"/>${readonly?'':`<button class="item-remove" data-item-delete="${x.uid}">×</button>`}</div>`; }
 function leaderboardPage() {
   const rows = state.leaderboard;
   const body = !hasBackend ? '<p class="lb-empty">The leaderboard turns on once card syncing is connected.</p>'
@@ -270,7 +298,7 @@ function modal() {
 
 function snapshot(){ state.history.push(JSON.stringify(state.items)); if(state.history.length>30)state.history.shift(); state.future=[]; }
 function lockedToast(id) { const f = foodById(id); const left = unlockAt(id) - receivedCount(); toast(`${f?.[1] || 'This piece'} unlocks after ${left} more thank-you card${left===1?'':'s'}. Share your table!`); }
-function addItem(id, x=50, y=50) { const f=foods.find(a=>a[0]===id); if(!f)return; if(isLocked(id)){lockedToast(id);return false;} snapshot(); state.items.push({uid:Date.now()+Math.random(),kind:f[3],name:f[1],asset:assetFor(f),x:x+(Math.random()*8-4),y:y+(Math.random()*8-4),rotate:(Math.random()*8-4),scale:f[4]==='center'?1.2:.83,z:state.items.length+3}); state.selected=state.items.at(-1).uid; render(); return true; }
+function addItem(id, x=50, y=50) { const f=foods.find(a=>a[0]===id); if(!f)return; if(isLocked(id)){lockedToast(id);return false;} snapshot(); state.items.push({uid:Date.now()+Math.random(),kind:f[3],name:f[1],asset:assetFor(f),x:x+(Math.random()*8-4),y:y+(Math.random()*8-4),rotate:(Math.random()*8-4),scale:f[4]==='center'?1.2:.83,z:state.items.length+3}); state.selected=state.items.at(-1).uid; pendingFx={uid:state.selected, cls:'pop-in'}; render(); pendingFx=null; burstAt(document.querySelector(`#table-canvas .placed-item[data-uid="${state.selected}"]`), ['✨','✨','🍂'], 8); return true; }
 function openLeaderboard() {
   state.page = 'leaderboard'; state.modal = null; state.leaderboard = null; render();
   if (!hasBackend) return;
@@ -301,6 +329,8 @@ async function submitCard(form) {
     if (state.isOwner) state.gratitude = card.message;
     state.cardPage = cardPages() - 1;
     closeModal();
+    const landed = document.querySelector(`.card-sticker[data-read="${CSS.escape(state.cards.at(-1).id)}"]`);
+    if (landed) { landed.classList.add('landed'); setTimeout(() => burstAt(landed, ['🍂','🍁','💛','✨'], 16), 650); }
     toast(hasBackend || state.isOwner ? 'Your card is on the table ♡' : 'Card added! Send this page’s link back so they can see it.');
   } catch (err) {
     console.warn(err);
@@ -328,10 +358,10 @@ function bind(){
     state.hostName = (document.querySelector('#host-name')?.value || '').trim().slice(0, 40);
     const listedBox = document.querySelector('#listed'); if (listedBox) state.listed = listedBox.checked;
     b.disabled = true; b.textContent = 'Saving…';
-    try { const url = await ensureShared(); const copied = await copyText(url); state.modal = {type:'share'}; render(); toast(copied ? 'Link copied! Send it to your people.' : 'Your link is ready. Copy it below.'); }
+    try { const url = await ensureShared(); const copied = await copyText(url); state.modal = {type:'share'}; render(); toast(copied ? 'Link copied! Send it to your people.' : 'Your link is ready. Copy it below.'); if (copied) burstAt(document.querySelector('#share-url'), ['💌','✨','🧡'], 12); }
     catch (err) { console.warn(err); state.modal = {type:'share', error: err.message}; render(); }
   });
-  on('[data-copy]', async ()=>{ const input=document.querySelector('#share-url'); input?.select(); toast(await copyText(state.shareUrl) ? 'Link copied!' : 'Press Ctrl+C / ⌘C to copy the link.'); });
+  on('[data-copy]', async (e,b)=>{ const input=document.querySelector('#share-url'); input?.select(); const copied = await copyText(state.shareUrl); toast(copied ? 'Link copied!' : 'Press Ctrl+C / ⌘C to copy the link.'); if (copied) burstAt(b, ['💌','✨','🧡'], 12); });
   on('[data-native-share]', async ()=>{ try { await navigator.share({ title:`${hostLabel()} Thanksgiving table`, text:'Pull up a chair and leave me a thank-you card on my Thanksgiving table 🦃', url:state.shareUrl }); } catch { /* user cancelled */ } });
   on('[data-delete-card]', async (e,b)=>{
     const id = b.dataset.deleteCard;
@@ -342,13 +372,13 @@ function bind(){
   document.querySelectorAll('[data-filter]').forEach(b=>b.onclick=()=>{state.filter=b.dataset.filter;render()});
   document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{const offscreen=state.page==='pantry'||innerWidth<=760;const added=addItem(b.dataset.add);if(added&&offscreen)toast(`Added ${foodById(b.dataset.add)?.[1]||'it'} to your table`);});
   document.querySelectorAll('[data-item-delete]').forEach(b=>b.onclick=e=>{e.stopPropagation();const i=state.items.findIndex(x=>String(x.uid)===b.dataset.itemDelete);if(i>-1){snapshot();state.items.splice(i,1);state.selected=null;render()}});
-  document.querySelectorAll('#table-canvas .placed-item:not(.readonly)').forEach(el=>{const item=state.items.find(x=>String(x.uid)===el.dataset.uid);if(!item)return;el.onpointerdown=e=>{if(e.target.classList.contains('item-remove'))return;state.selected=item.uid;snapshot();el.setPointerCapture(e.pointerId);drag={item,startX:e.clientX,startY:e.clientY,ox:item.x,oy:item.y};el.classList.add('dragging')};el.onpointermove=e=>{if(!drag||drag.item!==item)return;const stage=document.querySelector('#table-canvas').getBoundingClientRect();item.x=Math.max(8,Math.min(92,drag.ox+(e.clientX-drag.startX)/stage.width*100));item.y=Math.max(12,Math.min(86,drag.oy+(e.clientY-drag.startY)/stage.height*100));el.style.left=item.x+'%';el.style.top=item.y+'%'};el.onpointerup=()=>{if(drag){drag=null;render()}};el.onclick=()=>{state.selected=item.uid;render()}});
+  document.querySelectorAll('#table-canvas .placed-item:not(.readonly)').forEach(el=>{const item=state.items.find(x=>String(x.uid)===el.dataset.uid);if(!item)return;el.onpointerdown=e=>{if(e.target.classList.contains('item-remove'))return;state.selected=item.uid;snapshot();el.setPointerCapture(e.pointerId);drag={item,startX:e.clientX,startY:e.clientY,ox:item.x,oy:item.y};el.classList.add('dragging')};el.onpointermove=e=>{if(!drag||drag.item!==item)return;const stage=document.querySelector('#table-canvas').getBoundingClientRect();item.x=Math.max(8,Math.min(92,drag.ox+(e.clientX-drag.startX)/stage.width*100));item.y=Math.max(12,Math.min(86,drag.oy+(e.clientY-drag.startY)/stage.height*100));el.style.left=item.x+'%';el.style.top=item.y+'%'};el.onpointerup=()=>{if(drag){const moved=drag.item.x!==drag.ox||drag.item.y!==drag.oy;drag=null;if(moved)pendingFx={uid:item.uid,cls:'settle'};render();pendingFx=null}};el.onclick=()=>{state.selected=item.uid;render()}});
   document.querySelector('[data-undo]')?.addEventListener('click',()=>{if(state.history.length){state.future.push(JSON.stringify(state.items));state.items=JSON.parse(state.history.pop());render()}});
   document.querySelector('[data-clear]')?.addEventListener('click',()=>{if(state.items.length){snapshot();state.items=[];render()}});
   document.querySelector('[data-rotate]')?.addEventListener('click',()=>{const i=state.items.find(x=>x.uid===state.selected);if(i){snapshot();i.rotate+=15;render()}});
   document.querySelector('[data-duplicate]')?.addEventListener('click',()=>{const i=state.items.find(x=>x.uid===state.selected);if(i){snapshot();state.items.push({...i,uid:Date.now(),x:i.x+5,y:i.y+4,z:state.items.length+3});render()}});
   document.querySelector('[data-delete]')?.addEventListener('click',()=>{const i=state.items.findIndex(x=>x.uid===state.selected);if(i>-1){snapshot();state.items.splice(i,1);state.selected=null;render()}});
-  document.querySelector('[data-feast]')?.addEventListener('click',()=>{snapshot();['turkey','mash','stuffing','cranberry','pumpkin-pie','cider','rolls','candle','flowers'].filter(id=>!isLocked(id)).forEach((id,i)=>{const f=foods.find(a=>a[0]===id);state.items.push({uid:Date.now()+i,kind:f[3],name:f[1],asset:assetFor(f),x:25+(i%3)*25,y:32+Math.floor(i/3)*23,rotate:(i%2?5:-4),scale:f[4]==='center'?1.12:.75,z:i+3})});render()});
+  document.querySelector('[data-feast]')?.addEventListener('click',()=>{snapshot();['turkey','mash','stuffing','cranberry','pumpkin-pie','cider','rolls','candle','flowers'].filter(id=>!isLocked(id)).forEach((id,i)=>{const f=foods.find(a=>a[0]===id);state.items.push({uid:Date.now()+i,kind:f[3],name:f[1],asset:assetFor(f),x:25+(i%3)*25,y:32+Math.floor(i/3)*23,rotate:(i%2?5:-4),scale:f[4]==='center'?1.12:.75,z:i+3})});render();document.querySelectorAll('#table-canvas .placed-item').forEach((el,i)=>{el.classList.add('pop-in');el.style.animationDelay=`${i*60}ms`});burstAt(document.querySelector('#table-canvas'),['🍂','🍁','✨','🥧','🦃'],22)});
   document.querySelector('[data-random]')?.addEventListener('click',()=>addItem((list=>list[Math.floor(Math.random()*list.length)])(foods.filter(f=>!isLocked(f[0])))[0],30+Math.random()*40,30+Math.random()*35));
   document.querySelector('[data-finish]')?.addEventListener('click',()=>{state.page='finish';render()});
   document.querySelectorAll('[data-zoom]').forEach(b=>b.onclick=()=>{state.zoom=Math.max(.7,Math.min(1.3,state.zoom+(b.dataset.zoom==='+'?.1:-.1)));render()});

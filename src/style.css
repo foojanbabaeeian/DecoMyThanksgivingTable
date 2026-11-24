@@ -177,3 +177,36 @@ a.card-row{text-decoration:none;color:inherit}
 @keyframes card-bob{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-4px) rotate(2deg)}}
 @media(max-width:760px){.card-sticker .seal{width:18px;height:18px;font-size:9px;right:-4px;bottom:-3px}}
 @media(prefers-reduced-motion:reduce){.card-sticker img{animation:none}}
+/* ---------- Animations (all off for prefers-reduced-motion) ---------- */
+/* Burst of little leaves, hearts and sparkles */
+.burst{position:fixed;z-index:300;width:0;height:0;pointer-events:none}
+.burst span{position:absolute;left:0;top:0;font-size:20px;transform:translate(-50%,-50%);animation:burst-fly 1.05s cubic-bezier(.15,.7,.3,1) both;will-change:transform,opacity}
+@keyframes burst-fly{0%{opacity:0;transform:translate(-50%,-50%) scale(.3)}15%{opacity:1}70%{opacity:1}100%{opacity:0;transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy) + 40px)) rotate(var(--r)) scale(1)}}
+/* A new piece pops onto the table; a dragged piece settles */
+.placed-item.pop-in{animation:item-pop .55s cubic-bezier(.2,1.5,.4,1) both}
+.placed-item.settle{animation:item-settle .4s cubic-bezier(.2,1.6,.4,1)}
+@keyframes item-pop{0%{opacity:0;scale:.2}100%{opacity:1;scale:1}}
+@keyframes item-settle{0%{scale:1.08}100%{scale:1}}
+/* Steam from hot food */
+.placed-item.fx-steam::before,.placed-item.fx-steam::after{content:'';position:absolute;left:42%;top:2%;width:14%;height:34%;border-radius:50%;background:radial-gradient(ellipse at center,#fffdf6e6 0,#fffdf600 70%);filter:blur(4px);pointer-events:none;opacity:0;animation:steam 3.2s ease-out infinite}
+.placed-item.fx-steam::after{left:54%;animation-delay:1.6s}
+@keyframes steam{0%{opacity:0;transform:translateY(10%) scaleX(.6)}25%{opacity:.85}100%{opacity:0;transform:translateY(-80%) translateX(8px) scaleX(1.4)}}
+/* Flickering candles */
+.placed-item.fx-flicker img{animation:flicker 2.6s ease-in-out infinite}
+.placed-item.fx-flicker::after{content:'';position:absolute;left:25%;top:-5%;width:50%;height:45%;border-radius:50%;background:radial-gradient(circle,#ffd27a88 0,#ffd27a00 70%);pointer-events:none;animation:glow 2.6s ease-in-out infinite}
+@keyframes flicker{0%,100%{filter:drop-shadow(0 7px 4px #53312238) brightness(1)}20%{filter:drop-shadow(0 7px 4px #53312238) brightness(1.08)}45%{filter:drop-shadow(0 7px 4px #53312238) brightness(.96)}70%{filter:drop-shadow(0 7px 4px #53312238) brightness(1.1)}}
+@keyframes glow{0%,100%{opacity:.7;transform:scale(1)}45%{opacity:.45;transform:scale(.92)}70%{opacity:.9;transform:scale(1.06)}}
+/* A new card flutters down onto the table */
+.card-sticker.landed img{animation:card-land .9s cubic-bezier(.2,.9,.3,1.2) both,card-bob 3.6s ease-in-out .9s infinite}
+.card-sticker.landed .seal{animation:seal-stamp .35s cubic-bezier(.2,1.8,.4,1) .75s both}
+@keyframes card-land{0%{opacity:0;transform:translate(-40px,-160px) rotate(-35deg) scale(.5)}55%{opacity:1;transform:translate(10px,8px) rotate(8deg) scale(1.08)}75%{transform:translate(-4px,-3px) rotate(-4deg) scale(.98)}100%{transform:none}}
+@keyframes seal-stamp{0%{opacity:0;transform:scale(2.2)}100%{opacity:1;transform:none}}
+/* Pieces wiggle a little when you point at them in the studio */
+#table-canvas .placed-item:not(.readonly):hover img{animation:wiggle .5s ease-in-out}
+@keyframes wiggle{0%,100%{rotate:0deg}30%{rotate:-4deg}60%{rotate:3deg}}
+@media(prefers-reduced-motion:reduce){
+  .burst{display:none}
+  .placed-item.pop-in,.placed-item.settle,.placed-item.fx-flicker img,.card-sticker.landed img,.card-sticker.landed .seal,#table-canvas .placed-item:hover img{animation:none}
+  .placed-item.fx-steam::before,.placed-item.fx-steam::after,.placed-item.fx-flicker::after{display:none}
+}
+.table-canvas .card-sticker{width:max(46px,8.5cqw);height:max(46px,8.5cqw)}

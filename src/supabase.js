@@ -61,6 +61,8 @@ export async function fetchLeaderboard(limit = 25) {
 // ---------- Optional accounts (switched on with VITE_AUTH_ENABLED=true) ----------
 export const authEnabled = hasBackend && import.meta.env.VITE_AUTH_ENABLED === 'true';
 export const googleEnabled = authEnabled && import.meta.env.VITE_GOOGLE_SIGNIN === 'true';
+// Email links need a custom SMTP provider in Supabase for real users, so they have their own switch.
+export const emailEnabled = authEnabled && import.meta.env.VITE_EMAIL_SIGNIN === 'true';
 
 export async function currentUser() {
   if (!authEnabled) return null;

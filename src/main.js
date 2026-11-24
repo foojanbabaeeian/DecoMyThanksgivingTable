@@ -1,6 +1,6 @@
 import './style.css';
 import { TEMPLATES, shareLinks, qrSvg, storyImage } from './share.js';
-import { authEnabled, googleEnabled, currentUser, onAuthChange, signInWithEmail, signInWithGoogle, signOut, claimTable, fetchMyTables } from './supabase.js';
+import { authEnabled, googleEnabled, emailEnabled, currentUser, onAuthChange, signInWithEmail, signInWithGoogle, signOut, claimTable, fetchMyTables } from './supabase.js';
 import { hasBackend, createTable, updateTable, loadTable, loadCards, loadOwnerCards, addCard, deleteCard, fetchLeaderboard } from './supabase.js';
 
 const BASE_URL = import.meta.env.BASE_URL;
@@ -85,8 +85,8 @@ function announceUnlocks() {
   store.set(SEEN_KEY(state.remoteId), String(n));
   if (fresh.length) setTimeout(() => { toast(`✦ Unlocked: ${fresh.map(u => u.label).join(', ')}!`); burst(innerWidth / 2, innerHeight / 2.4, ['🥧','🍂','✨','🦃','🍁'], 26); }, 400);
 }
-// "Fozhan’s family" stays as typed; "Chris" → "Chris’"; "The Lee family" → "The Lee family’s".
-function possessive(name) { const n = String(name || '').trim(); if (/['’]s\b/i.test(n)) return n; return /s$/i.test(n) ? `${n}’` : `${n}’s`; }
+// "Fozhan’s family" stays as typed; everything else gets ’s: "Chris" → "Chris’s", "The Lee family" → "The Lee family’s".
+function possessive(name) { const n = String(name || '').trim(); if (/['’]s\b/i.test(n)) return n; return `${n}’s`; }
 const hostLabel = () => state.hostName ? possessive(state.hostName) : 'Our';
 function encodeTable(value) { return btoa(unescape(encodeURIComponent(JSON.stringify(value)))); }
 function decodeTable(value) { return JSON.parse(decodeURIComponent(escape(atob(value)))); }
@@ -343,9 +343,9 @@ ${hasBackend?`<label class="check listed-check"><input type="checkbox" id="setti
     body = m.sent
       ? `<h2>Check your inbox 💌</h2><p class="modal-sub">We sent a sign-in link to <b>${esc(m.sent)}</b>. Open it on this device to finish signing in. It can take a minute; check your spam folder too.</p><div class="modal-actions"><button class="secondary" data-menu="signin">Use a different email</button><button class="primary" data-close>OK</button></div>`
       : `<h2>Save your tables</h2><p class="modal-sub">Sign in to open your tables, edit them and read your cards on any device. It’s optional: everything works without an account.</p>
-${googleEnabled?'<button class="google-btn" data-google><span class="g">G</span>Continue with Google</button><div class="or-line"><span>or</span></div>':''}
-<form data-email-form novalidate><label class="field"><span>Email</span><input type="email" name="email" required autocomplete="email" placeholder="you@example.com"/></label><p class="form-error" hidden></p><div class="modal-actions"><button type="button" class="secondary" data-close>Not now</button><button type="submit" class="primary">Email me a sign-in link</button></div></form>
-<p class="modal-note">We only use your email to sign you in. No passwords, no newsletters.</p>`;
+${googleEnabled?'<button class="google-btn" data-google><span class="g">G</span>Continue with Google</button>':''}${googleEnabled&&emailEnabled?'<div class="or-line"><span>or</span></div>':''}
+${emailEnabled?`<form data-email-form novalidate><label class="field"><span>Email</span><input type="email" name="email" required autocomplete="email" placeholder="you@example.com"/></label><p class="form-error" hidden></p><div class="modal-actions"><button type="button" class="secondary" data-close>Not now</button><button type="submit" class="primary">Email me a sign-in link</button></div></form>`:''}
+<p class="modal-note">We only use your account to sign you in. No passwords, no newsletters.</p>`;
   } else if (m.type === 'account') {
     const n = state.accountTables.length;
     body = `<h2>My account</h2><p class="modal-sub">Signed in as <b>${esc(state.user?.email || 'you')}</b>.</p><p class="modal-note">${n} table${n===1?'':'s'} saved to your account. Open them from <b>My tables</b> on any device where you’re signed in.</p><div class="modal-actions"><button class="secondary danger" data-signout>Sign out</button><button class="secondary" data-menu="tables">My tables</button><button class="primary" data-close>Done</button></div>`;

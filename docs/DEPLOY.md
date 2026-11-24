@@ -22,7 +22,7 @@ Signing in is optional for hosts: it links their tables to an account so they ca
 1. **Supabase → Authentication → URL Configuration:** set **Site URL** to your site (e.g. `https://<you>.github.io/DecoMyThanksgivingTable/`) and add the same address followed by `**` under **Redirect URLs**.
 2. **Email links:** Supabase's built-in email sender only delivers to your own team's addresses and a handful per hour. For real users, add a custom SMTP provider under **Authentication → Emails → SMTP Settings** (for example Resend or Postmark, both have free tiers).
 3. **Google (recommended, no email limits):** in Google Cloud Console create an OAuth client (type *Web application*) with the redirect URI `https://<project-ref>.supabase.co/auth/v1/callback`, then paste its client ID and secret in **Supabase → Authentication → Providers → Google**.
-4. **Switch it on:** GitHub → **Settings → Secrets and variables → Actions → Variables**: `VITE_AUTH_ENABLED` = `true`, and `VITE_GOOGLE_SIGNIN` = `true` once step 3 is done. Push to `main` (or re-run the workflow) to rebuild.
+4. **Switch it on:** GitHub → **Settings → Secrets and variables → Actions → Variables**: `VITE_AUTH_ENABLED` = `true`, plus `VITE_GOOGLE_SIGNIN` = `true` once step 3 is done and/or `VITE_EMAIL_SIGNIN` = `true` once step 2 is done. Push to `main` (or re-run the workflow) to rebuild.
 
 That's it. Everything below is only for publishing on your own domain as well.
 

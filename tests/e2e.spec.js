@@ -90,7 +90,7 @@ test('table names read naturally (no "family’s’s")', async ({ page }) => {
   };
   expect(await open('Fozhan’s family')).toBe('Fozhan’s family Thanksgiving table');
   expect(await open("Fozhan's family")).toBe("Fozhan's family Thanksgiving table");
-  expect(await open('Chris')).toBe('Chris’ Thanksgiving table');
+  expect(await open('Chris')).toBe('Chris’s Thanksgiving table');
   expect(await open('The Lee family')).toBe('The Lee family’s Thanksgiving table');
 });
 

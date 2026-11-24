@@ -6,7 +6,9 @@ const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
 export const supabase = url && key ? createClient(url, key) : null;
 export const hasBackend = Boolean(supabase);
 
-const CARD_COLUMNS = 'id, message, sender_name, anonymous, food_asset, created_at';
+// Anyone can see that a card exists (sticker and time). Only the table's owner, holding
+// its edit key, can read messages and who wrote them, through get_cards().
+const PUBLIC_CARD_COLUMNS = 'id, food_asset, created_at';
 
 function check({ data, error }, what) {
   if (error) throw new Error(`Could not ${what}: ${error.message}`);
@@ -30,7 +32,11 @@ export async function loadTable(id) {
 }
 
 export async function loadCards(tableId) {
-  return check(await supabase.from('thank_you_cards').select(CARD_COLUMNS).eq('table_id', tableId).order('created_at'), 'load thank-you cards') || [];
+  return check(await supabase.from('thank_you_cards').select(PUBLIC_CARD_COLUMNS).eq('table_id', tableId).order('created_at'), 'load thank-you cards') || [];
+}
+
+export async function loadOwnerCards(tableId, token) {
+  return check(await supabase.rpc('get_cards', { p_table_id: tableId, p_token: token }), 'load your thank-you cards') || [];
 }
 
 export async function addCard(tableId, card) {
@@ -40,7 +46,7 @@ export async function addCard(tableId, card) {
     sender_name: card.anonymous ? null : (card.name || null),
     anonymous: Boolean(card.anonymous),
     food_asset: card.food || null
-  }).select(CARD_COLUMNS).single(), 'send your card');
+  }).select(PUBLIC_CARD_COLUMNS).single(), 'send your card');
 }
 
 export async function deleteCard(tableId, token, cardId) {

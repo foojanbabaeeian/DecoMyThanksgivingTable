@@ -74,8 +74,11 @@ create policy "Anyone can send thank-you cards"
 -- Never expose the key hash, and route all table writes through the functions below.
 revoke all on public.shared_tables from anon, authenticated;
 grant select (id, host_name, arrangement, listed, created_at, updated_at) on public.shared_tables to anon, authenticated;
+-- Cards are private to the table's host: anyone can see that a card exists (sticker,
+-- time) but not its message or who wrote it. The host reads full cards through get_cards().
 revoke all on public.thank_you_cards from anon, authenticated;
-grant select, insert on public.thank_you_cards to anon, authenticated;
+grant select (id, table_id, food_asset, created_at) on public.thank_you_cards to anon, authenticated;
+grant insert (table_id, message, sender_name, anonymous, food_asset) on public.thank_you_cards to anon, authenticated;
 
 -- Older signatures from earlier versions of this file.
 drop function if exists public.create_table(text, jsonb);
@@ -154,6 +157,22 @@ as $$
   select exists (select 1 from deleted);
 $$;
 
+-- The host reads their cards with the table's key (stored only as a hash).
+create or replace function public.get_cards(p_table_id uuid, p_token uuid)
+returns table (id uuid, message text, sender_name text, anonymous boolean, food_asset text, created_at timestamptz)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select c.id, c.message, case when c.anonymous then null else c.sender_name end, c.anonymous, c.food_asset, c.created_at
+    from public.thank_you_cards c
+    join public.shared_tables t on t.id = c.table_id
+   where c.table_id = p_table_id
+     and t.edit_token_hash = sha256(convert_to(p_token::text, 'UTF8'))
+   order by c.created_at;
+$$;
+
 revoke all on function public.create_table(text, jsonb, boolean) from public;
 revoke all on function public.update_table(uuid, uuid, text, jsonb, boolean) from public;
 revoke all on function public.leaderboard(int) from public;
@@ -161,6 +180,8 @@ revoke all on function public.delete_card(uuid, uuid, uuid) from public;
 grant execute on function public.create_table(text, jsonb, boolean) to anon, authenticated;
 grant execute on function public.update_table(uuid, uuid, text, jsonb, boolean) to anon, authenticated;
 grant execute on function public.leaderboard(int) to anon, authenticated;
+revoke all on function public.get_cards(uuid, uuid) from public;
+grant execute on function public.get_cards(uuid, uuid) to anon, authenticated;
 grant execute on function public.delete_card(uuid, uuid, uuid) to anon, authenticated;
 
 -- Basic flood protection: at most 20 new cards per table per minute.

@@ -57,3 +57,41 @@ export async function deleteCard(tableId, token, cardId) {
 export async function fetchLeaderboard(limit = 25) {
   return check(await supabase.rpc('leaderboard', { p_limit: limit }), 'load the leaderboard') || [];
 }
+
+// ---------- Optional accounts (switched on with VITE_AUTH_ENABLED=true) ----------
+export const authEnabled = hasBackend && import.meta.env.VITE_AUTH_ENABLED === 'true';
+export const googleEnabled = authEnabled && import.meta.env.VITE_GOOGLE_SIGNIN === 'true';
+
+export async function currentUser() {
+  if (!authEnabled) return null;
+  const { data } = await supabase.auth.getSession();
+  return data.session?.user ?? null;
+}
+
+export function onAuthChange(callback) {
+  if (!authEnabled) return;
+  supabase.auth.onAuthStateChange((event, session) => callback(event, session?.user ?? null));
+}
+
+export async function signInWithEmail(email, redirectTo) {
+  const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo } });
+  if (error) throw new Error(`Could not send the sign-in email: ${error.message}`);
+}
+
+export async function signInWithGoogle(redirectTo) {
+  const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } });
+  if (error) throw new Error(`Could not start Google sign-in: ${error.message}`);
+}
+
+export async function signOut() {
+  await supabase.auth.signOut();
+}
+
+// Link a table this browser holds the key for to the signed-in account.
+export async function claimTable(id, token) {
+  return check(await supabase.rpc('claim_table', { p_id: id, p_token: token }), 'save your table to your account');
+}
+
+export async function fetchMyTables() {
+  return check(await supabase.rpc('my_tables'), 'load your tables') || [];
+}

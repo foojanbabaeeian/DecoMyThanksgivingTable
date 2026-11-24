@@ -55,6 +55,9 @@ jobs:
           if [ -n "$SB_KEY" ]; then export VITE_SUPABASE_ANON_KEY="$SB_KEY"; fi
           npm run build
         env:
+          # Optional sign-in switches (Settings → Variables). Off unless set to true.
+          VITE_AUTH_ENABLED: ${{ vars.VITE_AUTH_ENABLED }}
+          VITE_GOOGLE_SIGNIN: ${{ vars.VITE_GOOGLE_SIGNIN }}
           SB_URL: ${{ github.event_name != 'pull_request' && (secrets.VITE_SUPABASE_URL || vars.VITE_SUPABASE_URL) || '' }}
           SB_KEY: ${{ github.event_name != 'pull_request' && (secrets.VITE_SUPABASE_ANON_KEY || vars.VITE_SUPABASE_ANON_KEY) || '' }}
       - name: Smoke test the build

@@ -1,5 +1,6 @@
 import './style.css';
 import { TEMPLATES, shareLinks, qrSvg, storyImage } from './share.js';
+import { authEnabled, googleEnabled, currentUser, onAuthChange, signInWithEmail, signInWithGoogle, signOut, claimTable, fetchMyTables } from './supabase.js';
 import { hasBackend, createTable, updateTable, loadTable, loadCards, loadOwnerCards, addCard, deleteCard, fetchLeaderboard } from './supabase.js';
 
 const BASE_URL = import.meta.env.BASE_URL;
@@ -24,7 +25,7 @@ const store = {
   get(k) { try { return localStorage.getItem(k); } catch { return null; } },
   set(k, v) { try { localStorage.setItem(k, v); } catch { /* private mode: owner link just won't be remembered */ } }
 };
-let state = { page:'home', filter:'all', selected:null, tableId:newTableId(), remoteId:null, editToken:null, hostName:'', isOwner:true, items:[], cards:[], history:[], future:[], zoom:1, gratitude:'', musicMuted:true, modal:null, shareUrl:'', listed:false, cardPage:0, leaderboard:null };
+let state = { page:'home', filter:'all', selected:null, tableId:newTableId(), remoteId:null, editToken:null, hostName:'', isOwner:true, items:[], cards:[], history:[], future:[], zoom:1, gratitude:'', musicMuted:true, modal:null, shareUrl:'', listed:false, cardPage:0, leaderboard:null, user:null, accountTables:[] };
 let drag = null;
 let saveTimer = null;
 let lastSaved = '';
@@ -53,11 +54,21 @@ function receivedCount() { const mine = myCardIds(); return state.cards.filter(c
 const isLocked = id => state.isOwner && receivedCount() < unlockAt(id);
 const nextUnlock = () => UNLOCKS.find(u => u.at > receivedCount()) || null;
 function myTables() {
-  const list = readJson(TABLES_KEY, []);
-  const last = store.get(LAST_KEY);
-  if (Array.isArray(list) && list.length) return list;
-  return last ? [{ id:last, name:'My table' }] : [];
+  let list = readJson(TABLES_KEY, []);
+  if (!Array.isArray(list) || !list.length) { const last = store.get(LAST_KEY); list = last ? [{ id:last, name:'My table' }] : []; }
+  const seen = new Set(list.map(t => t.id));
+  for (const t of state.accountTables) if (!seen.has(t.id)) list.push({ id:t.id, name:t.host_name || 'My table' });
+  return list;
 }
+// Signing in links every table this browser holds a key for to the account.
+async function linkLocalTables() {
+  for (const t of readJson(TABLES_KEY, [])) {
+    const token = store.get(OWNER_KEY(t.id));
+    if (token) { try { await claimTable(t.id, token); } catch (err) { console.warn(err); } }
+  }
+  state.accountTables = await fetchMyTables().catch(() => []);
+}
+function signInRedirect() { return `${pageBase()}${location.search}`; }
 function rememberTable() {
   if (!state.remoteId) return;
   const list = myTables().filter(t => t.id !== state.remoteId);
@@ -125,6 +136,21 @@ function toast(message) {
 async function copyText(text) { try { await navigator.clipboard.writeText(text); return true; } catch { return false; } }
 
 async function init() {
+  if (authEnabled) {
+    state.user = await currentUser().catch(() => null);
+    onAuthChange(async (event, user) => {
+      const was = state.user?.id;
+      state.user = user;
+      if (event === 'SIGNED_IN' && user && was !== user.id) {
+        await linkLocalTables();
+        toast('Signed in ✦ Your tables are saved to your account.');
+        if (state.remoteId && !state.isOwner && state.accountTables.some(t => t.id === state.remoteId)) { location.reload(); return; }
+        render();
+      }
+      if (event === 'SIGNED_OUT') { state.accountTables = []; render(); }
+    });
+    if (state.user) state.accountTables = await fetchMyTables().catch(() => []);
+  }
   const id = new URLSearchParams(location.search).get('t');
   if (id) {
     if (!hasBackend) { state.page = 'missing'; render(); return; }
@@ -139,6 +165,10 @@ async function init() {
       state.gratitude = table.arrangement?.gratitude || '';
       state.editToken = store.get(OWNER_KEY(table.id));
       state.isOwner = Boolean(state.editToken);
+      if (!state.isOwner && state.user) {
+        state.accountTables = await fetchMyTables().catch(() => []);
+        state.isOwner = state.accountTables.some(t => t.id === table.id);
+      }
       state.page = state.isOwner ? 'studio' : 'guest';
       lastSaved = snapshotKey();
       state.cards = (state.isOwner ? await loadOwnerCards(table.id, state.editToken) : withMySentCards(table.id, await loadCards(table.id))).map(sanitizeCard);
@@ -180,7 +210,7 @@ async function ensureShared() {
   return state.shareUrl;
 }
 async function saveNow() {
-  if (!hasBackend || !state.remoteId || !state.editToken) return;
+  if (!hasBackend || !state.remoteId || !(state.editToken || state.user)) return;
   const key = snapshotKey();
   if (key === lastSaved) return;
   await updateTable(state.remoteId, state.editToken, state.hostName, arrangement(), state.listed);
@@ -188,7 +218,7 @@ async function saveNow() {
   rememberTable();
 }
 function scheduleSave() {
-  if (!state.isOwner || !state.remoteId || !state.editToken) return;
+  if (!state.isOwner || !state.remoteId || !(state.editToken || state.user)) return;
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => saveNow().catch(err => { console.warn(err); toast('Couldn’t save your latest changes. Check your connection.'); }), 900);
 }
@@ -302,20 +332,30 @@ ${navigator.share?'<button class="share-btn" data-native-share><span class="sb-i
     const item = (attr, icon, label, extra='') => `<li><button ${attr}><span class="mi">${icon}</span><span class="ml">${label}</span>${extra}<b>›</b></button></li>`;
     const count = myTables().length;
     const leaves = ['🍂','🍁','🍂','🍁','🍂'].map((l, i) => `<span style="--d:${i}">${l}</span>`).join('');
-    body = `<div class="menu-leaves" aria-hidden="true">${leaves}</div><div class="menu-head"><span class="menu-crest" aria-hidden="true">🦃</span><h2 class="menu-title">Menu</h2><p class="menu-sub">Happy Thanksgiving</p></div><ul class="menu-list">${state.isOwner?item('data-page="studio"','🍽️','Table studio')+item('data-page="pantry"','🥧','The pantry'):item('data-new-table','🍽️','Make your own table')}${item('data-menu="tables"','🧺','My tables', count?`<em>${count}</em>`:'')}${state.isOwner?item('data-menu="settings"','⚙️','Table settings'):''}${item('data-menu="leaderboard"','🏆','Leaderboard')}${item('data-menu="how"','🍂','How it works')}<li><a href="${esc(FEEDBACK_URL)}" target="_blank" rel="noopener"><span class="mi">💌</span><span class="ml">Feedback</span><b>↗</b></a></li>${item('data-menu="privacy"','🕯️','Privacy')}</ul><p class="menu-foot"><button data-menu="terms">Terms</button> · <button data-menu="privacy">Privacy</button> · <a href="https://github.com/foojanbabaeeian/DecoMyThanksgivingTable" target="_blank" rel="noopener">Open source</a></p>`;
+    body = `<div class="menu-leaves" aria-hidden="true">${leaves}</div><div class="menu-head"><span class="menu-crest" aria-hidden="true">🦃</span><h2 class="menu-title">Menu</h2><p class="menu-sub">Happy Thanksgiving</p></div><ul class="menu-list">${state.isOwner?item('data-page="studio"','🍽️','Table studio')+item('data-page="pantry"','🥧','The pantry'):item('data-new-table','🍽️','Make your own table')}${item('data-menu="tables"','🧺','My tables', count?`<em>${count}</em>`:'')}${state.isOwner?item('data-menu="settings"','⚙️','Table settings'):''}${authEnabled?(state.user?item('data-menu="account"','👤','My account', '<em>signed in</em>'):item('data-menu="signin"','🔐','Save my tables')):''}${item('data-menu="leaderboard"','🏆','Leaderboard')}${item('data-menu="how"','🍂','How it works')}<li><a href="${esc(FEEDBACK_URL)}" target="_blank" rel="noopener"><span class="mi">💌</span><span class="ml">Feedback</span><b>↗</b></a></li>${item('data-menu="privacy"','🕯️','Privacy')}</ul><p class="menu-foot"><button data-menu="terms">Terms</button> · <button data-menu="privacy">Privacy</button> · <a href="https://github.com/foojanbabaeeian/DecoMyThanksgivingTable" target="_blank" rel="noopener">Open source</a></p>`;
   } else if (m.type === 'settings') {
     body = `<h2>Table settings</h2><p class="modal-sub">${state.remoteId?'Changes show up for everyone who opens your link.':'These apply as soon as you share your table.'}</p>
 <label class="field"><span>Table name</span><input id="settings-name" maxlength="40" value="${esc(state.hostName)}" placeholder="e.g. The Garcia family"/></label>
 ${hasBackend?`<label class="check listed-check"><input type="checkbox" id="settings-listed" ${state.listed?'checked':''}/><span>Show my table on the public leaderboard <small>Your table name and card count become public. Card messages stay private. You can turn this off anytime.</small></span></label>`:''}
 <p class="form-error" hidden></p>
 <div class="modal-actions"><button class="secondary" data-close>Cancel</button><button class="primary" data-save-settings>Save</button></div>`;
+  } else if (m.type === 'signin') {
+    body = m.sent
+      ? `<h2>Check your inbox 💌</h2><p class="modal-sub">We sent a sign-in link to <b>${esc(m.sent)}</b>. Open it on this device to finish signing in. It can take a minute; check your spam folder too.</p><div class="modal-actions"><button class="secondary" data-menu="signin">Use a different email</button><button class="primary" data-close>OK</button></div>`
+      : `<h2>Save your tables</h2><p class="modal-sub">Sign in to open your tables, edit them and read your cards on any device. It’s optional: everything works without an account.</p>
+${googleEnabled?'<button class="google-btn" data-google><span class="g">G</span>Continue with Google</button><div class="or-line"><span>or</span></div>':''}
+<form data-email-form novalidate><label class="field"><span>Email</span><input type="email" name="email" required autocomplete="email" placeholder="you@example.com"/></label><p class="form-error" hidden></p><div class="modal-actions"><button type="button" class="secondary" data-close>Not now</button><button type="submit" class="primary">Email me a sign-in link</button></div></form>
+<p class="modal-note">We only use your email to sign you in. No passwords, no newsletters.</p>`;
+  } else if (m.type === 'account') {
+    const n = state.accountTables.length;
+    body = `<h2>My account</h2><p class="modal-sub">Signed in as <b>${esc(state.user?.email || 'you')}</b>.</p><p class="modal-note">${n} table${n===1?'':'s'} saved to your account. Open them from <b>My tables</b> on any device where you’re signed in.</p><div class="modal-actions"><button class="secondary danger" data-signout>Sign out</button><button class="secondary" data-menu="tables">My tables</button><button class="primary" data-close>Done</button></div>`;
   } else if (m.type === 'tables') {
     const list = myTables();
-    body = `<h2>My tables</h2><p class="modal-sub">Tables you created on this device.</p>${list.length?`<div class="card-list">${list.map(t=>`<a class="card-row" href="?t=${encodeURIComponent(t.id)}"><span class="card-row-icon"><span>🍽</span></span><span><strong>${esc(t.name)}</strong><small>Open table</small></span></a>`).join('')}</div>`:'<p class="modal-note">No shared tables yet. Decorate one and press “Share table” to get your link.</p>'}<div class="modal-actions"><button class="primary" data-new-table>Start a new table <span>→</span></button></div>`;
+    body = `<h2>My tables</h2><p class="modal-sub">${state.user?'Tables on this device and in your account.':'Tables you created on this device.'}</p>${list.length?`<div class="card-list">${list.map(t=>`<a class="card-row" href="?t=${encodeURIComponent(t.id)}"><span class="card-row-icon"><span>🍽</span></span><span><strong>${esc(t.name)}</strong><small>Open table</small></span></a>`).join('')}</div>`:'<p class="modal-note">No shared tables yet. Decorate one and press “Share table” to get your link.</p>'}<div class="modal-actions"><button class="primary" data-new-table>Start a new table <span>→</span></button></div>`;
   } else if (m.type === 'how') {
     body = `<h2>How it works</h2><ol class="how-list"><li><b>Decorate your table.</b> Drag food and decorations anywhere on the table.</li><li><b>Share your link.</b> Send it to family, friends and group chats.</li><li><b>Get thank-you cards.</b> Everyone who opens your link can leave you a card with a sticker. Cards sit right on your table.</li><li><b>Unlock more pieces.</b> The more cards friends leave, the fancier your table gets.</li></ol><div class="unlock-tiers">${UNLOCKS.map(u=>`<div><b>${u.at} cards</b><span>${esc(u.label)}</span></div>`).join('')}</div><p class="modal-note">Cards you write on your own table don’t count toward unlocks.</p><div class="modal-actions"><button class="primary" data-close>Got it</button></div>`;
   } else if (m.type === 'privacy') {
-    body = `<h2>Privacy</h2><div class="policy"><p>DecoThanks has no accounts and no ad tracking.</p><p><b>What we store:</b> your table’s layout and name, and each thank-you card’s message, sender name (unless sent anonymously) and sticker.</p><p><b>Who can see it:</b> anyone with your table’s link can see the table and how many cards it has. <b>Only the table’s host can read the cards and see who wrote them</b>: messages and names are locked in the database behind the host’s private key. People who write a card can see their own card again on the same device. If you turn on the leaderboard, your table’s name and card count are public.</p><p><b>Your edit key:</b> the browser you created a table in keeps a private key so only you can change it. Clearing your browser data removes it.</p><p><b>Music:</b> the theme song plays through YouTube’s privacy-enhanced player, and only after you press play.</p><p>To have a table or card removed, use Feedback in the menu.</p></div><div class="modal-actions"><button class="primary" data-close>Close</button></div>`;
+    body = `<h2>Privacy</h2><div class="policy"><p>DecoThanks has no accounts and no ad tracking.</p><p><b>What we store:</b> your table’s layout and name, and each thank-you card’s message, sender name (unless sent anonymously) and sticker.</p><p><b>Who can see it:</b> anyone with your table’s link can see the table and how many cards it has. <b>Only the table’s host can read the cards and see who wrote them</b>: messages and names are locked in the database behind the host’s private key. People who write a card can see their own card again on the same device. If you turn on the leaderboard, your table’s name and card count are public.</p><p><b>Your edit key:</b> the browser you created a table in keeps a private key so only you can change it. Clearing your browser data removes it.</p><p><b>Optional account:</b> if you sign in, we store your email address and link your tables to it, so you can manage them from any device. Nobody else can see your email.</p><p><b>Music:</b> the theme song plays through YouTube’s privacy-enhanced player, and only after you press play.</p><p>To have a table or card removed, use Feedback in the menu.</p></div><div class="modal-actions"><button class="primary" data-close>Close</button></div>`;
   } else if (m.type === 'terms') {
     body = `<h2>Terms</h2><div class="policy"><p>Be kind. Cards are meant to say thank you.</p><p>Don’t post anything hateful, harassing, sexual, or anyone’s private information. We may remove cards or tables that break these rules.</p><p>You’re responsible for what you write. DecoThanks is provided as is, without warranties.</p></div><div class="modal-actions"><button class="primary" data-close>Close</button></div>`;
   }
@@ -374,6 +414,17 @@ function bind(){
   on('[data-read]', (e,b)=>{ e.stopPropagation(); state.modal={type:'read', id:b.dataset.read}; render(); });
   on('[data-close]', closeModal);
   on('[data-menu-open]', ()=>{ state.modal={type:'menu'}; render(); });
+  document.querySelector('[data-email-form]')?.addEventListener('submit', async e=>{
+    e.preventDefault();
+    const form = e.currentTarget, err = form.querySelector('.form-error'), btn = form.querySelector('[type=submit]');
+    const email = String(new FormData(form).get('email') || '').trim();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { err.hidden = false; err.textContent = 'Please enter a valid email address.'; return; }
+    btn.disabled = true; btn.textContent = 'Sending…';
+    try { await signInWithEmail(email, signInRedirect()); state.modal = { type:'signin', sent:email }; render(); }
+    catch (ex) { console.warn(ex); btn.disabled = false; btn.textContent = 'Email me a sign-in link'; err.hidden = false; err.textContent = ex.message; }
+  });
+  on('[data-google]', async (e,b)=>{ b.disabled = true; try { await signInWithGoogle(signInRedirect()); } catch (ex) { console.warn(ex); b.disabled = false; toast(ex.message); } });
+  on('[data-signout]', async ()=>{ await signOut(); state.user = null; state.accountTables = []; if (state.isOwner && !state.editToken) { location.reload(); return; } closeModal(); toast('Signed out.'); });
   on('[data-save-settings]', async (e,b)=>{
     const err = document.querySelector('.modal .form-error');
     const name = (document.querySelector('#settings-name')?.value || '').trim().slice(0, 40);

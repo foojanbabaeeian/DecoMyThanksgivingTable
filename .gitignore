@@ -6,3 +6,4 @@ test-results/
 playwright-report/
 .vscode/
 .e2e-dist/
+.auth-preview/

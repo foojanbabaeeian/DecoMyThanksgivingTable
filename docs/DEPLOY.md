@@ -15,6 +15,15 @@ There are two ways to publish. Both run from the same GitHub Actions workflow, a
 3. **Settings → Secrets and variables → Actions → New repository secret**: add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
 4. Push to `main` (or **Actions → Test and deploy → Run workflow**). The `github-pages` job prints the live link.
 
+### Optional sign-in (save tables to an account)
+
+Signing in is optional for hosts: it links their tables to an account so they can edit them and read cards on any device. It stays hidden until you switch it on.
+
+1. **Supabase → Authentication → URL Configuration:** set **Site URL** to your site (e.g. `https://<you>.github.io/DecoMyThanksgivingTable/`) and add the same address followed by `**` under **Redirect URLs**.
+2. **Email links:** Supabase's built-in email sender only delivers to your own team's addresses and a handful per hour. For real users, add a custom SMTP provider under **Authentication → Emails → SMTP Settings** (for example Resend or Postmark, both have free tiers).
+3. **Google (recommended, no email limits):** in Google Cloud Console create an OAuth client (type *Web application*) with the redirect URI `https://<project-ref>.supabase.co/auth/v1/callback`, then paste its client ID and secret in **Supabase → Authentication → Providers → Google**.
+4. **Switch it on:** GitHub → **Settings → Secrets and variables → Actions → Variables**: `VITE_AUTH_ENABLED` = `true`, and `VITE_GOOGLE_SIGNIN` = `true` once step 3 is done. Push to `main` (or re-run the workflow) to rebuild.
+
 That's it. Everything below is only for publishing on your own domain as well.
 
 ---

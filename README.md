@@ -2,8 +2,6 @@
 
 Decorate a Thanksgiving table, share the link, and let friends and family leave you thank-you cards.
 
-> **Created by [yesslay209-bot](https://github.com/yesslay209-bot).** DecoThanks began as her project: she built the first version of the site in a single class hour, inspired by Deco My Tree. This repository grew it into a launch-ready, open-source app. See [Credits](#credits).
-
 **Live:** https://foojanbabaeeian.github.io/DecoMyThanksgivingTable/
 
 ![DecoThanks on two phones: a shared table full of thank-you cards, and the home page](docs/screenshots/phones.png)
@@ -45,7 +43,7 @@ Contributions are welcome! Read [CONTRIBUTING.md](CONTRIBUTING.md), then pick an
 
 ## Credits
 
-- **[yesslay209-bot](https://github.com/yesslay209-bot)** created DecoThanks: the original idea, the first version of the site, and its table and food artwork ([original repository](https://github.com/yesslay209-bot/DecoMyThanksgivingTable)).
+- The original DecoThanks site, idea and table and food artwork are by [yesslay209-bot](https://github.com/yesslay209-bot).
 - **[foojanbabaeeian](https://github.com/foojanbabaeeian)** grew it into this open-source version: sharing, sealed cards, the database, testing and deployment.
 - Inspired by [Deco My Tree](https://www.decomytree.com/).
 - Everyone who contributes. Thank you! 🧡

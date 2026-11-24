@@ -1,21 +1,28 @@
-name: Deploy to GitHub Pages
+name: Test and deploy
 
+# Every push and pull request is built and smoke-tested.
+# Pushes to main then publish, only after the tests pass:
+#   - to GitHub Pages (https://<owner>.github.io/<repo>/), always; no domain or server needed
+#   - to your own server behind Cloudflare too, if the DEPLOY_* secrets are set (docs/DEPLOY.md)
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
-concurrency:
-  group: pages
-  cancel-in-progress: true
+env:
+  # Used for the link-preview image. Your own domain if SITE_DOMAIN is set, else the GitHub Pages address.
+  SITE_URL: ${{ vars.SITE_DOMAIN && format('https://{0}/', vars.SITE_DOMAIN) || format('https://{0}.github.io/{1}/', github.repository_owner, github.event.repository.name) }}
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,31 +30,100 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - id: pages
-        uses: actions/configure-pages@v5
       - run: npm ci
       - name: Build
-        # Supabase settings come from Settings → Secrets and variables → Actions
-        # (secrets or variables), falling back to a committed .env.production.
-        # With neither, the app still works but cards won't sync between people.
+        # Supabase keys come from Settings → Secrets and variables → Actions.
+        # The anon key is public by design (it ships in the browser bundle);
+        # Row Level Security in supabase/schema.sql is what protects the data.
         run: |
           if [ -n "$SB_URL" ]; then export VITE_SUPABASE_URL="$SB_URL"; fi
           if [ -n "$SB_KEY" ]; then export VITE_SUPABASE_ANON_KEY="$SB_KEY"; fi
           npm run build
         env:
-          SITE_URL: ${{ steps.pages.outputs.base_url }}
           SB_URL: ${{ secrets.VITE_SUPABASE_URL || vars.VITE_SUPABASE_URL }}
           SB_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || vars.VITE_SUPABASE_ANON_KEY }}
-      - uses: actions/upload-pages-artifact@v3
+      - name: Smoke test the build
+        run: npm run smoke
+      - uses: actions/upload-artifact@v4
         with:
+          name: site
           path: dist
+          retention-days: 7
 
-  deploy:
-    needs: build
+  github-pages:
+    needs: test
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: site
+          path: dist
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  own-server:
+    needs: test
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://${{ vars.SITE_DOMAIN || 'thanksgiving.fozhan.dev' }}/
+    env:
+      DOMAIN: ${{ vars.SITE_DOMAIN || 'thanksgiving.fozhan.dev' }}
+      SSH_HOST: ${{ secrets.DEPLOY_HOST }}
+      SSH_PORT: ${{ secrets.DEPLOY_PORT || '22' }}
+      SSH_USER: ${{ secrets.DEPLOY_USER || 'deploy' }}
+    steps:
+      - name: Check deploy secrets
+        id: gate
+        run: |
+          if [ -z "$SSH_HOST" ]; then
+            echo "DEPLOY_HOST is not set, so nothing was deployed. See docs/DEPLOY.md." >> "$GITHUB_STEP_SUMMARY"
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/download-artifact@v4
+        if: steps.gate.outputs.ready == 'true'
+        with:
+          name: site
+          path: dist
+      - name: Set up SSH
+        if: steps.gate.outputs.ready == 'true'
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          # Pinned host key (no ssh-keyscan at deploy time, so a swapped server is refused).
+          printf '%s\n' "${{ secrets.DEPLOY_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+      - name: Upload and switch over atomically
+        if: steps.gate.outputs.ready == 'true'
+        run: |
+          RELEASE="$(date -u +%Y%m%d%H%M%S)-${GITHUB_SHA::7}"
+          SSH="ssh -i $HOME/.ssh/deploy_key -p $SSH_PORT -o StrictHostKeyChecking=yes $SSH_USER@$SSH_HOST"
+          tar -C dist -czf - . | $SSH "set -e
+            mkdir -p /var/www/$DOMAIN/releases/$RELEASE
+            tar -xzf - -C /var/www/$DOMAIN/releases/$RELEASE
+            test -f /var/www/$DOMAIN/releases/$RELEASE/index.html
+            ln -sfn /var/www/$DOMAIN/releases/$RELEASE /var/www/$DOMAIN/current.new
+            mv -Tf /var/www/$DOMAIN/current.new /var/www/$DOMAIN/current
+            cd /var/www/$DOMAIN/releases && ls -1t | tail -n +6 | xargs -r rm -rf"
+      - name: Check the live site
+        if: steps.gate.outputs.ready == 'true'
+        run: |
+          for i in 1 2 3 4 5; do
+            code=$(curl -s -o /tmp/page.html -w '%{http_code}' "https://$DOMAIN/?deploy=${GITHUB_SHA::7}") || true
+            if [ "$code" = "200" ] && grep -q 'Harvest Table' /tmp/page.html; then echo "Live: https://$DOMAIN/"; exit 0; fi
+            sleep 5
+          done
+          echo "The site did not answer 200 with the expected page (last status: $code)."; exit 1

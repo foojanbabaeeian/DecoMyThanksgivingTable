@@ -16,6 +16,8 @@ create table if not exists public.shared_tables (
 );
 alter table public.shared_tables add column if not exists host_name text;
 alter table public.shared_tables add column if not exists edit_token uuid not null default gen_random_uuid();
+-- Hosts opt in to the public leaderboard.
+alter table public.shared_tables add column if not exists listed boolean not null default false;
 
 create table if not exists public.thank_you_cards (
   id uuid primary key default gen_random_uuid(),
@@ -57,22 +59,26 @@ create policy "Anyone can send thank-you cards"
 
 -- Never expose edit_token, and route all table writes through the functions below.
 revoke all on public.shared_tables from anon, authenticated;
-grant select (id, host_name, arrangement, created_at, updated_at) on public.shared_tables to anon, authenticated;
+grant select (id, host_name, arrangement, listed, created_at, updated_at) on public.shared_tables to anon, authenticated;
 revoke all on public.thank_you_cards from anon, authenticated;
 grant select, insert on public.thank_you_cards to anon, authenticated;
 
-create or replace function public.create_table(p_host_name text, p_arrangement jsonb)
+-- Older signatures from earlier versions of this file.
+drop function if exists public.create_table(text, jsonb);
+drop function if exists public.update_table(uuid, uuid, text, jsonb);
+
+create or replace function public.create_table(p_host_name text, p_arrangement jsonb, p_listed boolean default false)
 returns table (id uuid, edit_token uuid)
 language sql
 security definer
 set search_path = public
 as $$
-  insert into public.shared_tables (host_name, arrangement)
-  values (left(nullif(btrim(p_host_name), ''), 60), coalesce(p_arrangement, '{}'::jsonb))
+  insert into public.shared_tables (host_name, arrangement, listed)
+  values (left(nullif(btrim(p_host_name), ''), 60), coalesce(p_arrangement, '{}'::jsonb), coalesce(p_listed, false))
   returning shared_tables.id, shared_tables.edit_token;
 $$;
 
-create or replace function public.update_table(p_id uuid, p_token uuid, p_host_name text, p_arrangement jsonb)
+create or replace function public.update_table(p_id uuid, p_token uuid, p_host_name text, p_arrangement jsonb, p_listed boolean default null)
 returns boolean
 language sql
 security definer
@@ -82,11 +88,29 @@ as $$
     update public.shared_tables
        set host_name = left(nullif(btrim(p_host_name), ''), 60),
            arrangement = coalesce(p_arrangement, '{}'::jsonb),
+           listed = coalesce(p_listed, shared_tables.listed),
            updated_at = now()
      where shared_tables.id = p_id and shared_tables.edit_token = p_token
     returning 1
   )
   select exists (select 1 from updated);
+$$;
+
+-- Public leaderboard: only tables whose hosts opted in.
+create or replace function public.leaderboard(p_limit int default 25)
+returns table (id uuid, host_name text, card_count bigint)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select t.id, t.host_name, count(c.id) as card_count
+    from public.shared_tables t
+    left join public.thank_you_cards c on c.table_id = t.id
+   where t.listed
+   group by t.id
+   order by count(c.id) desc, t.created_at asc
+   limit least(greatest(coalesce(p_limit, 25), 1), 100);
 $$;
 
 create or replace function public.delete_card(p_table_id uuid, p_token uuid, p_card_id uuid)
@@ -107,11 +131,13 @@ as $$
   select exists (select 1 from deleted);
 $$;
 
-revoke all on function public.create_table(text, jsonb) from public;
-revoke all on function public.update_table(uuid, uuid, text, jsonb) from public;
+revoke all on function public.create_table(text, jsonb, boolean) from public;
+revoke all on function public.update_table(uuid, uuid, text, jsonb, boolean) from public;
+revoke all on function public.leaderboard(int) from public;
 revoke all on function public.delete_card(uuid, uuid, uuid) from public;
-grant execute on function public.create_table(text, jsonb) to anon, authenticated;
-grant execute on function public.update_table(uuid, uuid, text, jsonb) to anon, authenticated;
+grant execute on function public.create_table(text, jsonb, boolean) to anon, authenticated;
+grant execute on function public.update_table(uuid, uuid, text, jsonb, boolean) to anon, authenticated;
+grant execute on function public.leaderboard(int) to anon, authenticated;
 grant execute on function public.delete_card(uuid, uuid, uuid) to anon, authenticated;
 
 -- Basic flood protection: at most 20 new cards per table per minute.

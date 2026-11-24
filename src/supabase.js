@@ -13,20 +13,20 @@ function check({ data, error }, what) {
   return data;
 }
 
-export async function createTable(hostName, arrangement) {
-  const rows = check(await supabase.rpc('create_table', { p_host_name: hostName, p_arrangement: arrangement }), 'create your table');
+export async function createTable(hostName, arrangement, listed = false) {
+  const rows = check(await supabase.rpc('create_table', { p_host_name: hostName, p_arrangement: arrangement, p_listed: Boolean(listed) }), 'create your table');
   const row = Array.isArray(rows) ? rows[0] : rows;
   if (!row?.id || !row?.edit_token) throw new Error('Could not create your table: no id returned');
   return row;
 }
 
-export async function updateTable(id, token, hostName, arrangement) {
-  const ok = check(await supabase.rpc('update_table', { p_id: id, p_token: token, p_host_name: hostName, p_arrangement: arrangement }), 'save your table');
+export async function updateTable(id, token, hostName, arrangement, listed = false) {
+  const ok = check(await supabase.rpc('update_table', { p_id: id, p_token: token, p_host_name: hostName, p_arrangement: arrangement, p_listed: Boolean(listed) }), 'save your table');
   if (!ok) throw new Error('Could not save your table: this browser is not its owner');
 }
 
 export async function loadTable(id) {
-  return check(await supabase.from('shared_tables').select('id, host_name, arrangement').eq('id', id).maybeSingle(), 'load this table');
+  return check(await supabase.from('shared_tables').select('id, host_name, arrangement, listed').eq('id', id).maybeSingle(), 'load this table');
 }
 
 export async function loadCards(tableId) {
@@ -46,4 +46,8 @@ export async function addCard(tableId, card) {
 export async function deleteCard(tableId, token, cardId) {
   const ok = check(await supabase.rpc('delete_card', { p_table_id: tableId, p_token: token, p_card_id: cardId }), 'remove that card');
   if (!ok) throw new Error('Could not remove that card');
+}
+
+export async function fetchLeaderboard(limit = 25) {
+  return check(await supabase.rpc('leaderboard', { p_limit: limit }), 'load the leaderboard') || [];
 }

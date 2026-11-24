@@ -6,12 +6,16 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "smoke": "node scripts/smoke.mjs",
+    "check": "npm run build && npm run smoke"
   },
   "devDependencies": {
     "vite": "^8.3.8"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.119.2"
-  }
+  },
+  "description": "Decorate a Thanksgiving table, share the link, and collect thank-you cards from friends.",
+  "license": "MIT"
 }

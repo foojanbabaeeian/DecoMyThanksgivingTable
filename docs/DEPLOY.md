@@ -4,7 +4,7 @@ There are two ways to publish. Both run from the same GitHub Actions workflow, a
 
 | | GitHub Pages (default) | Your own server + domain |
 |---|---|---|
-| Address | `https://<you>.github.io/DecoMyThanksgivingTable/` | e.g. `https://decothanks.fozhan.dev` |
+| Address | `https://<you>.github.io/DecoMyThanksgivingTable/` | e.g. `https://thanks.example.com` |
 | Needs | Supabase + 2 GitHub secrets | Supabase, a server, Cloudflare DNS, 7 GitHub secrets |
 | Setup time | ~10 minutes | ~25 minutes |
 
@@ -19,7 +19,7 @@ That's it. Everything below is only for publishing on your own domain as well.
 
 ---
 
-# Your own domain: decothanks.fozhan.dev
+# Optional: self-host on your own server and domain
 
 The site is static files (the `dist/` folder) served by nginx on the Hetzner server, with Cloudflare in front and Supabase for data. GitHub Actions builds and tests every push. A push to `main` deploys only if the tests pass.
 
@@ -41,11 +41,11 @@ Do these once, in order. Steps 1 and 2 can happen in parallel.
 
 ## 2. Cloudflare DNS (2 minutes)
 
-In the Cloudflare dashboard for `fozhan.dev` → **DNS → Add record**:
+In your DNS provider (the steps below use Cloudflare) for `example.com`, add a record:
 
 | Type | Name | Content | Proxy |
 |---|---|---|---|
-| A | `thanksgiving` | `195.201.39.214` | **DNS only** (grey cloud) for now |
+| A | `thanksgiving` | `<your-server-ip>` | **DNS only** (grey cloud) for now |
 
 Leave it grey until the certificate exists (step 3). Then switch it to **Proxied** (orange cloud), and under **SSL/TLS → Overview** make sure the mode is **Full (strict)**.
 
@@ -60,20 +60,20 @@ ssh-keygen -t ed25519 -f ~/harvest-deploy -C "github-actions harvest-table" -N "
 Copy the `deploy/` folder to the server and run the setup with the public key:
 
 ```bash
-scp -P 443 -i ~/my-hub -r deploy root@195.201.39.214:/root/harvest-deploy
-ssh -p 443 -i ~/my-hub root@195.201.39.214 \
-  "bash /root/harvest-deploy/server-setup.sh decothanks.fozhan.dev \"$(cat ~/harvest-deploy.pub)\""
+scp -P 443 -i ~/.ssh/<your-admin-key> -r deploy root@<your-server-ip>:/root/harvest-deploy
+ssh -p 443 -i ~/.ssh/<your-admin-key> root@<your-server-ip> \
+  "bash /root/harvest-deploy/server-setup.sh thanks.example.com \"$(cat ~/harvest-deploy.pub)\""
 ```
 
-The script creates a `deploy` user that can only write to `/var/www/decothanks.fozhan.dev`, adds an nginx site (it doesn't touch your other sites), runs `nginx -t` before reloading, and asks certbot for a certificate. At the end it prints the server's host key line for the next step.
+The script creates a `deploy` user that can only write to `/var/www/thanks.example.com`, adds an nginx site (it doesn't touch your other sites), runs `nginx -t` before reloading, and asks certbot for a certificate. At the end it prints the server's host key line for the next step.
 
-**One thing to check, because SSH and HTTPS share port 443 through sslh:** nginx may listen for HTTPS on a different internal port than 443. Compare the new site with an existing one:
+**If your server shares port 443 between SSH and HTTPS (sslh), check one thing:** nginx may listen for HTTPS on a different internal port than 443. Compare the new site with an existing one:
 
 ```bash
-grep -h "listen" /etc/nginx/sites-enabled/decothanks.fozhan.dev /etc/nginx/sites-enabled/<your travelhub site>
+grep -h "listen" /etc/nginx/sites-enabled/thanks.example.com /etc/nginx/sites-enabled/<another site>
 ```
 
-If travelhub uses something like `listen 127.0.0.1:4443 ssl;` and the new file says `listen 443 ssl;`, change the new file to match, then `nginx -t && systemctl reload nginx`.
+If your other site uses something like `listen 127.0.0.1:4443 ssl;` and the new file says `listen 443 ssl;`, change the new file to match, then `nginx -t && systemctl reload nginx`.
 
 Now switch the Cloudflare record to **Proxied**.
 
@@ -85,17 +85,17 @@ Fork repo → **Settings → Secrets and variables → Actions**:
 |---|---|
 | `VITE_SUPABASE_URL` | Project URL from step 1 |
 | `VITE_SUPABASE_ANON_KEY` | anon key from step 1 |
-| `DEPLOY_HOST` | `195.201.39.214` |
-| `DEPLOY_PORT` | `443` (sslh shares the port with HTTPS) |
+| `DEPLOY_HOST` | `<your-server-ip>` |
+| `DEPLOY_PORT` | your SSH port: `22` usually, or `443` if your server shares it with HTTPS through sslh |
 | `DEPLOY_USER` | `deploy` |
 | `DEPLOY_SSH_KEY` | contents of `~/harvest-deploy` (the private key) |
-| `DEPLOY_KNOWN_HOSTS` | the line the setup script printed, e.g. `[195.201.39.214]:443 ssh-ed25519 AAAA…` |
+| `DEPLOY_KNOWN_HOSTS` | the line the setup script printed, e.g. `[<your-server-ip>]:443 ssh-ed25519 AAAA…` |
 
-Also add the **variable** (not secret) `SITE_DOMAIN` = `decothanks.fozhan.dev`, so link previews point at your domain instead of the GitHub Pages address.
+Also add the **variable** (not secret) `SITE_DOMAIN` = `thanks.example.com`, so link previews point at your domain instead of the GitHub Pages address.
 
 ## 5. Deploy and check
 
-Push to `main`, or run **Actions → Test and deploy → Run workflow**. The deploy job checks that `https://decothanks.fozhan.dev` answers with the new page and fails the run if it doesn't.
+Push to `main`, or run **Actions → Test and deploy → Run workflow**. The deploy job checks that `https://thanks.example.com` answers with the new page and fails the run if it doesn't.
 
 Then run through this checklist on a real phone before posting the link anywhere:
 
@@ -111,13 +111,13 @@ Then run through this checklist on a real phone before posting the link anywhere
 Each deploy keeps the last five releases. To roll back on the server:
 
 ```bash
-ls -1t /var/www/decothanks.fozhan.dev/releases
-ln -sfn /var/www/decothanks.fozhan.dev/releases/<older-id> /var/www/decothanks.fozhan.dev/current
+ls -1t /var/www/thanks.example.com/releases
+ln -sfn /var/www/thanks.example.com/releases/<older-id> /var/www/thanks.example.com/current
 ```
 
 ## Alternative: Cloudflare Pages
 
-If you'd rather not use the server, Cloudflare Pages can host the same `dist/` folder: connect the repo, build command `npm run build`, output `dist`, add the two `VITE_SUPABASE_*` variables, and set the custom domain `decothanks.fozhan.dev`. The GitHub Actions test job still guards pull requests.
+If you'd rather not use the server, Cloudflare Pages can host the same `dist/` folder: connect the repo, build command `npm run build`, output `dist`, add the two `VITE_SUPABASE_*` variables, and set the custom domain `thanks.example.com`. The GitHub Actions test job still guards pull requests.
 
 ## Pipeline security
 

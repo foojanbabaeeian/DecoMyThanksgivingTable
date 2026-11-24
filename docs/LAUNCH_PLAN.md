@@ -5,7 +5,7 @@ Goal: as many real tables and thank-you cards as possible by Thanksgiving (Thurs
 ## Before posting anything (Tuesday, Nov 24)
 
 - [ ] Supabase project created and `supabase/schema.sql` run ([DEPLOY.md](DEPLOY.md) step 1)
-- [ ] Site live (GitHub Pages, or decothanks.fozhan.dev if you set up the server), and the deploy jobs passed
+- [ ] Site live at https://foojanbabaeeian.github.io/DecoMyThanksgivingTable/ and the deploy run is green
 - [ ] Phone checklist in DEPLOY.md done on a real iPhone and a real Android phone
 - [ ] Your own table created, shared, with 3+ real cards from friends (so the first visitors see a lively table and the unlock box moving)
 - [ ] Your table switched on for the leaderboard, so it isn't empty

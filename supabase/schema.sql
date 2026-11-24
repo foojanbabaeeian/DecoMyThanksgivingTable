@@ -179,6 +179,9 @@ begin
 end;
 $$;
 
+-- A trigger function, not part of the public API: nobody may call it directly.
+revoke all on function public.limit_card_rate() from public, anon, authenticated;
+
 drop trigger if exists thank_you_cards_rate_limit on public.thank_you_cards;
 create trigger thank_you_cards_rate_limit
   before insert on public.thank_you_cards

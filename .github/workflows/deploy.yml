@@ -23,6 +23,8 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - id: pages
+        uses: actions/configure-pages@v5
       - run: npm ci
       - name: Build
         # Supabase settings come from Settings → Secrets and variables → Actions
@@ -33,6 +35,7 @@ jobs:
           if [ -n "$SB_KEY" ]; then export VITE_SUPABASE_ANON_KEY="$SB_KEY"; fi
           npm run build
         env:
+          SITE_URL: ${{ steps.pages.outputs.base_url }}
           SB_URL: ${{ secrets.VITE_SUPABASE_URL || vars.VITE_SUPABASE_URL }}
           SB_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || vars.VITE_SUPABASE_ANON_KEY }}
       - uses: actions/upload-pages-artifact@v3
